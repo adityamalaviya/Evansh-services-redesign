@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/lib/contexts/AuthContext";
+import { AuthProvider } from "@backend/contexts/AuthContext";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta-sans",
+});
 
 export const metadata: Metadata = {
   title: "Evansh Services - learn today, build tomorrow",
@@ -13,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full scroll-smooth antialiased">
-      <body className="min-h-full bg-[#F8FAFC] text-[#1E293B] overflow-x-hidden font-sans">
+    <html lang="en" className={`h-full scroll-smooth antialiased ${plusJakartaSans.variable}`}>
+      <body className={`${plusJakartaSans.className} min-h-full bg-[#F8FAFC] text-[#1E293B] overflow-x-hidden antialiased`}>
         <AuthProvider>
           {children}
         </AuthProvider>

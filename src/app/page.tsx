@@ -1,12 +1,5 @@
-import { Header, Hero, Courses } from "@/components";
+import HomePage from "@frontend/modules/Home/HomePage";
 
-export default function Home() {
-  return (
-    <main className="min-h-screen bg-[#F8FAFC]">
-      <Header />
-      <Hero />
-      <Courses />
-      {/* Additional sections can be added here */}
-    </main>
-  );
+export default function Page() {
+  return <HomePage />;
 }
