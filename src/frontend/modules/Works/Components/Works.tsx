@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Globe, Laptop, Database, GraduationCap, Printer, Cube, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, Globe, Laptop, Database, GraduationCap, Cube, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
 import { Query } from "appwrite";
+import { useAuth } from "@backend/contexts/AuthContext";
+import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
 
 interface Project {
   id: string | number;
@@ -22,9 +25,8 @@ const categories = [
   { name: "Websites", icon: <Globe size={18} /> },
   { name: "Inventory Systems", icon: <Database size={18} /> },
   { name: "College Portals", icon: <GraduationCap size={18} /> },
-  { name: "Printing", icon: <Printer size={18} /> },
-  { name: "Other Projects", icon: <DotsThreeOutline size={18} /> },
   { name: "3D Printing", icon: <Cube size={18} /> },
+  { name: "Other Projects", icon: <DotsThreeOutline size={18} /> },
 ];
 
 const Works: React.FC = () => {
@@ -32,6 +34,31 @@ const Works: React.FC = () => {
   const [dbProjects, setDbProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEnrollmentOpen, setIsEnrollmentOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isLoggedIn, isLoading } = useAuth();
+
+  // Auto-open project inquiry modal if redirected from login page with ?course=Start%20Your%20Journey param
+  useEffect(() => {
+    const courseParam = searchParams.get("course");
+    if (courseParam && decodeURIComponent(courseParam) === "Start Your Journey") {
+      setIsEnrollmentOpen(true);
+      // Clean the URL without causing a page reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete("course");
+      url.searchParams.delete("redirect");
+      router.replace(url.pathname + (url.search || ""), { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  const handleStartJourneyClick = () => {
+    if (!isLoading && !isLoggedIn) {
+      router.push(`/login?redirect=/works&course=${encodeURIComponent("Start Your Journey")}`);
+    } else {
+      setIsEnrollmentOpen(true);
+    }
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -194,15 +221,21 @@ const Works: React.FC = () => {
                 We turn ideas into powerful digital solutions. Let's build something amazing.
               </p>
             </div>
-            <Link
-              href="/contact"
-              className="bg-[#14B8A6] text-white px-10 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-[#0D9488] transition-all hover:scale-105 active:scale-95 shadow-2xl"
+            <button
+              onClick={handleStartJourneyClick}
+              disabled={isLoading}
+              className="bg-[#14B8A6] text-white px-10 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-[#0D9488] transition-all hover:scale-105 active:scale-95 shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Start Your Journey <ArrowRight size={20} weight="bold" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+      <EnrollmentModal
+        isOpen={isEnrollmentOpen}
+        onClose={() => setIsEnrollmentOpen(false)}
+        course={{ title: "Start Your Journey", color: "#14B8A6" }}
+      />
     </section>
   );
 };

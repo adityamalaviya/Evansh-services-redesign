@@ -4,8 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
-import Header from "@frontend/components/Navigation/Header/Header";
-import Footer from "@frontend/components/Navigation/Footer/Footer";
+import { Header, Footer } from "@frontend/components";
 
 const services = [
   {

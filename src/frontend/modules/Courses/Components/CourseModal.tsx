@@ -3,15 +3,17 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle,
   Code,
   RocketLaunch,
-  Briefcase,
-  X
+  Briefcase
 } from "@phosphor-icons/react";
+import EnrollmentModal from "./EnrollmentModal";
+import { useAuth } from "@backend/contexts/AuthContext";
 
 interface CourseModalProps {
   isOpen: boolean;
@@ -25,6 +27,19 @@ interface CourseModalProps {
 
 const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) => {
   const [mounted, setMounted] = useState(false);
+  const [isEnrollmentOpen, setIsEnrollmentOpen] = useState(false);
+  const { isLoggedIn, isLoading } = useAuth();
+  const router = useRouter();
+
+  const handleStartLearning = () => {
+    if (!isLoading && !isLoggedIn) {
+      // Redirect to login with a return path so we can auto-open the course modal after login
+      const courseName = course?.title ?? "";
+      router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
+    } else {
+      setIsEnrollmentOpen(true);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -63,12 +78,6 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
             <span className="text-xs md:text-sm">Back to Courses</span>
           </button>
 
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"
-          >
-            <X size={20} weight="bold" />
-          </button>
         </div>
 
         <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent overflow-x-hidden">
@@ -91,7 +100,9 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
                     <span className="text-3xl font-black text-slate-900">₹3500</span>
                   </div>
                   <button 
-                    className="flex items-center justify-center gap-3 text-white px-10 py-4 rounded-2xl font-black transition-all active:scale-95 shadow-lg shadow-teal-500/20"
+                    onClick={handleStartLearning}
+                    disabled={isLoading}
+                    className="flex items-center justify-center gap-3 text-white px-10 py-4 rounded-2xl font-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-teal-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ backgroundColor: course.color }}
                   >
                     Start Learning <ArrowRight size={20} weight="bold" />
@@ -192,9 +203,16 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return (
+    <>
+      {createPortal(modalContent, document.body)}
+      <EnrollmentModal
+        isOpen={isEnrollmentOpen}
+        onClose={() => setIsEnrollmentOpen(false)}
+        course={course}
+      />
+    </>
+  );
 };
-
-
 
 export default CourseModal;

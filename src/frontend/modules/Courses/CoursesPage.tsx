@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Header, Courses, Footer } from "@frontend/components";
 
 export default function CoursesPage() {
@@ -6,7 +7,9 @@ export default function CoursesPage() {
       <Header />
       <main>
         <div className="pt-28 pb-20"> {/* Spacer for fixed header */}
-          <Courses forceVisible={true} />
+          <Suspense fallback={null}>
+            <Courses forceVisible={true} />
+          </Suspense>
         </div>
       </main>
       <Footer />

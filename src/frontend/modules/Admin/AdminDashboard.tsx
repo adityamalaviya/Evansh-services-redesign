@@ -45,41 +45,45 @@ export default function AdminDashboard() {
     {
       label: "Total Projects",
       value: isLoading ? "..." : stats.totalProjects,
-      icon: <Images size={28} weight="duotone" />,
+      icon: <Images size={26} weight="duotone" />,
       color: "text-[#14B8A6]",
-      bg: "bg-teal-950/50",
+      bg: "bg-teal-50",
+      border: "border-teal-100",
       href: "/admin/projects",
     },
     {
       label: "3D Printing Projects",
       value: isLoading ? "..." : stats.threeDProjects,
-      icon: <Cube size={28} weight="duotone" />,
-      color: "text-purple-400",
-      bg: "bg-purple-950/50",
+      icon: <Cube size={26} weight="duotone" />,
+      color: "text-purple-500",
+      bg: "bg-purple-50",
+      border: "border-purple-100",
       href: "/admin/projects/3d-printing",
     },
     {
       label: "Courses",
       value: "6",
-      icon: <GraduationCap size={28} weight="duotone" />,
-      color: "text-blue-400",
-      bg: "bg-blue-950/50",
+      icon: <GraduationCap size={26} weight="duotone" />,
+      color: "text-blue-500",
+      bg: "bg-blue-50",
+      border: "border-blue-100",
       href: "/admin/courses",
     },
     {
       label: "Services",
       value: "12",
-      icon: <Briefcase size={28} weight="duotone" />,
-      color: "text-orange-400",
-      bg: "bg-orange-950/50",
+      icon: <Briefcase size={26} weight="duotone" />,
+      color: "text-orange-500",
+      bg: "bg-orange-50",
+      border: "border-orange-100",
       href: "/admin/services",
     },
   ];
 
   const quickActions = [
-    { label: "Add New Project", href: "/admin/projects/new", icon: <Plus size={18} /> },
-    { label: "Add 3D Project", href: "/admin/projects/new?category=3D+Printing", icon: <Plus size={18} /> },
-    { label: "View All Projects", href: "/admin/projects", icon: <ArrowRight size={18} /> },
+    { label: "Add New Project", href: "/admin/projects/new", icon: <Plus size={16} /> },
+    { label: "Add 3D Project", href: "/admin/projects/new?category=3D+Printing", icon: <Plus size={16} /> },
+    { label: "View All Projects", href: "/admin/projects", icon: <ArrowRight size={16} /> },
   ];
 
   return (
@@ -87,12 +91,12 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Dashboard</h1>
-          <p className="text-slate-400 text-sm mt-1">Welcome back! Here's an overview of your site.</p>
+          <h1 className="text-2xl font-black text-[#1E1E24] tracking-tight">Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-1">Welcome back! Here's an overview of your site.</p>
         </div>
         <Link
           href="/admin/projects/new"
-          className="inline-flex items-center gap-2 bg-[#14B8A6] hover:bg-[#0D9488] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-lg shadow-teal-900/40"
+          className="inline-flex items-center gap-2 bg-[#14B8A6] hover:bg-[#0D9488] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-md shadow-teal-200/60"
         >
           <Plus size={18} weight="bold" /> Add Project
         </Link>
@@ -104,13 +108,13 @@ export default function AdminDashboard() {
           <Link
             key={card.label}
             href={card.href}
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-slate-600 transition-all group"
+            className={`bg-white border ${card.border} rounded-2xl p-6 hover:shadow-md transition-all group`}
           >
             <div className={`inline-flex p-3 rounded-xl ${card.bg} ${card.color} mb-4`}>
               {card.icon}
             </div>
-            <p className="text-3xl font-black text-white mb-1">{card.value}</p>
-            <p className="text-slate-400 text-sm font-medium">{card.label}</p>
+            <p className="text-3xl font-black text-[#1E1E24] mb-1">{card.value}</p>
+            <p className="text-slate-500 text-sm font-medium">{card.label}</p>
             <div className={`flex items-center gap-1 mt-3 ${card.color} text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity`}>
               Manage <ArrowRight size={12} />
             </div>
@@ -119,17 +123,17 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-5">
           <TrendUp size={20} className="text-[#14B8A6]" weight="duotone" />
-          <h2 className="text-white font-bold">Quick Actions</h2>
+          <h2 className="text-[#1E1E24] font-bold">Quick Actions</h2>
         </div>
         <div className="flex flex-wrap gap-3">
           {quickActions.map((action) => (
             <Link
               key={action.label}
               href={action.href}
-              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:text-white border border-slate-700 hover:border-slate-500"
+              className="flex items-center gap-2 bg-slate-50 hover:bg-teal-50 text-slate-600 hover:text-[#14B8A6] px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-slate-200 hover:border-teal-200"
             >
               {action.icon}
               {action.label}
@@ -139,11 +143,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-teal-950/40 border border-teal-800/40 rounded-2xl p-6">
+      <div className="bg-teal-50 border border-teal-100 rounded-2xl p-6">
         <h3 className="text-[#14B8A6] font-bold mb-2">📋 Getting Started</h3>
-        <p className="text-slate-400 text-sm leading-relaxed">
-          Make sure your <span className="text-white font-semibold">Appwrite Database</span> is set up with the collection ID matching{" "}
-          <code className="bg-slate-800 text-teal-300 px-2 py-0.5 rounded text-xs">NEXT_PUBLIC_APPWRITE_PROJECTS_COLLECTION_ID</code>.
+        <p className="text-slate-500 text-sm leading-relaxed">
+          Make sure your <span className="text-[#1E1E24] font-semibold">Appwrite Database</span> is set up with the collection ID matching{" "}
+          <code className="bg-white border border-slate-200 text-[#14B8A6] px-2 py-0.5 rounded text-xs">NEXT_PUBLIC_APPWRITE_PROJECTS_COLLECTION_ID</code>.
           Projects added here will appear live on your website.
         </p>
       </div>

@@ -10,11 +10,12 @@ import {
   EyeSlash, 
   ArrowRight, 
 } from "@phosphor-icons/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@backend/contexts/AuthContext";
 
 export default function AuthLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, loginWithGoogle, isLoggedIn, isLoading, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,16 +23,27 @@ export default function AuthLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Build the post-login redirect URL (preserving ?course= if present)
+  const getRedirectUrl = (isAdmin: boolean): string => {
+    if (isAdmin) return "/admin";
+    const redirectPath = searchParams.get("redirect");
+    const courseName = searchParams.get("course");
+    if (redirectPath) {
+      return courseName
+        ? `${redirectPath}?course=${encodeURIComponent(courseName)}`
+        : redirectPath;
+    }
+    return "/";
+  };
+
   // If already logged in, redirect appropriately
   useEffect(() => {
     if (!isLoading && isLoggedIn && user) {
       const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
-      if (user.email?.trim().toLowerCase() === adminEmail) {
-        router.push("/admin");
-      } else {
-        router.push("/");
-      }
+      const isAdmin = user.email?.trim().toLowerCase() === adminEmail;
+      router.push(getRedirectUrl(isAdmin));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isLoggedIn, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,17 +52,15 @@ export default function AuthLoginPage() {
     setError(null);
     try {
       await login(email, password);
-      
-      // Check if the user is an admin
+
+      // Redirect: admin → /admin, everyone else → redirect param or home
       const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
-      if (email.trim().toLowerCase() === adminEmail) {
-        router.push("/admin");
-      } else {
-        router.push("/");
-      }
-    } catch (err: any) {
+      const isAdmin = email.trim().toLowerCase() === adminEmail;
+      router.push(getRedirectUrl(isAdmin));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Invalid email or password. Please try again.";
       console.error("Login failed:", err);
-      setError(err.message || "Invalid email or password. Please try again.");
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

@@ -5,11 +5,13 @@ import Link from "next/link";
 import { ArrowRight, Hexagon, UserCircle, SignOut, List, X } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { useAuth } from "@backend/contexts/AuthContext";
+import { ConfirmModal } from "@frontend/components";
 
 const Header: React.FC = () => {
   const { isLoggedIn, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -62,7 +64,7 @@ const Header: React.FC = () => {
             <span className="absolute bottom-1.5 left-1/2 w-0 h-0.5 bg-[#14B8A6] transition-all duration-300 group-hover:w-1/2 group-hover:left-1/4 rounded-full"></span>
           </Link>
           <Link href="/works" className="group relative px-5 py-2.5 text-sm font-bold text-slate-600 hover:text-[#14B8A6] transition-all rounded-full hover:bg-[#14B8A6]/10 hover:scale-110 active:scale-95 cursor-pointer">
-            Our Works
+            Our Work
             <span className="absolute bottom-1.5 left-1/2 w-0 h-0.5 bg-[#14B8A6] transition-all duration-300 group-hover:w-1/2 group-hover:left-1/4 rounded-full"></span>
           </Link>
           <Link href="/contact" className="group relative px-5 py-2.5 text-sm font-bold text-slate-600 hover:text-[#14B8A6] transition-all rounded-full hover:bg-[#14B8A6]/10 hover:scale-110 active:scale-95 cursor-pointer">
@@ -81,7 +83,7 @@ const Header: React.FC = () => {
                   <UserCircle size={32} weight="fill" />
                   <div className="absolute top-full right-0 pt-2 opacity-0 group-hover/avatar:opacity-100 transition-all pointer-events-none group-hover/avatar:pointer-events-auto z-50">
                     <button 
-                      onClick={logout}
+                      onClick={() => setIsLogoutModalOpen(true)}
                       className="bg-white shadow-2xl rounded-xl p-3 text-slate-600 border border-slate-100 flex items-center gap-2 text-xs font-bold whitespace-nowrap hover:text-red-500 hover:bg-red-50 transition-colors shadow-slate-200"
                     >
                       <SignOut size={16} weight="bold" /> Logout
@@ -131,7 +133,7 @@ const Header: React.FC = () => {
             { name: "Home", href: "/#home" },
             { name: "Courses", href: "/#courses" },
             { name: "About Us", href: "/about" },
-            { name: "Our Works", href: "/works" },
+            { name: "Our Work", href: "/works" },
             { name: "Contact", href: "/contact" },
             { name: "Services", href: "/services" }
           ].map((link) => (
@@ -154,8 +156,8 @@ const Header: React.FC = () => {
           {isLoggedIn && (
             <button 
               onClick={() => {
-                logout();
                 setIsMobileMenuOpen(false);
+                setIsLogoutModalOpen(true);
               }}
               className="flex items-center gap-3 px-6 py-4 text-sm font-bold text-red-600 hover:bg-red-50 rounded-2xl transition-all mt-2 border-t border-slate-50"
             >
@@ -164,6 +166,17 @@ const Header: React.FC = () => {
           )}
         </nav>
       </div>
+
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={logout}
+        title="Logout Confirmation"
+        message="Are you sure you want to log out from your account? You will need to login again to access your dashboard."
+        confirmText="Yes, Logout"
+        cancelText="Stay Logged In"
+        type="danger"
+      />
     </header>
   );
 };

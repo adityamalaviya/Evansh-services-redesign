@@ -1,21 +1,130 @@
 "use client";
 
-import React from "react";
-import { 
-  Phone, 
-  Envelope, 
-  MapPin, 
-  Clock, 
-  Headset, 
+import React, { useState } from "react";
+import {
+  Phone,
+  Envelope,
+  MapPin,
+  Clock,
+  Headset,
   Users,
   PaperPlaneRight,
-  ArrowRight
+  CheckCircle,
+  Warning,
 } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
-import Header from "@frontend/components/Navigation/Header/Header";
-import Footer from "@frontend/components/Navigation/Footer/Footer";
+import { Header, Footer } from "@frontend/components";
+import { databases, DB_ID, CONTACT_COLLECTION_ID, ID } from "@backend/services/appwrite";
+import { sendContactEmail } from "@backend/actions/email.actions";
+
+interface ContactFormData {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  subject?: string;
+  message?: string;
+}
+
+type SubmitStatus = "idle" | "loading" | "success" | "error";
 
 const ContactPage = () => {
+  const [formData, setFormData] = useState<ContactFormData>({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required.";
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email.";
+    }
+    if (formData.phone.trim() && !/^[0-9+\-\s]{7,15}$/.test(formData.phone.trim())) {
+      newErrors.phone = "Please enter a valid phone number.";
+    }
+    if (!formData.subject.trim()) {
+      newErrors.subject = "Subject is required.";
+    }
+    if (!formData.message.trim()) {
+      newErrors.message = "Message is required.";
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = "Message must be at least 10 characters.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ): void => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error on change
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setSubmitStatus("loading");
+    setErrorMessage("");
+
+    try {
+      await databases.createDocument(DB_ID, CONTACT_COLLECTION_ID, ID.unique(), {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || "",
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      });
+
+      // Send Email Notification
+      await sendContactEmail({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || "",
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      });
+
+      setSubmitStatus("success");
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error occurred.";
+      setErrorMessage(`Failed to send: ${message}`);
+      setSubmitStatus("error");
+    }
+  };
+
+  const inputClass = (field: keyof FormErrors): string =>
+    `w-full bg-white/50 border rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all font-medium ${errors[field]
+      ? "border-red-300 focus:ring-red-200"
+      : "border-slate-100 focus:ring-[#14B8A6]/20"
+    }`;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <Header />
@@ -26,40 +135,37 @@ const ContactPage = () => {
             <div className="space-y-8">
               <div className="space-y-4">
                 <h1 className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
-                  We're here to <br />
+                  We&apos;re here to <br />
                   <span className="text-[#14B8A6]">help you!</span>
                 </h1>
                 <p className="text-slate-500 text-lg max-w-md leading-relaxed">
                   Have questions or need guidance? <br />
-                  Feel free to reach out to us. We'll get back <br />
+                  Feel free to reach out to us. We&apos;ll get back <br />
                   to you as soon as possible.
                 </p>
               </div>
 
               <div className="space-y-6">
-                {/* Contact Item */}
                 <div className="flex items-start gap-4 group">
                   <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 text-[#14B8A6] group-hover:scale-110 transition-transform">
                     <Phone size={24} weight="bold" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900">Phone</h3>
-                    <p className="text-slate-500 text-sm font-medium">+91 6351938789</p>
+                    <p className="text-slate-500 text-sm font-medium">NA</p>
                   </div>
                 </div>
 
-                {/* Contact Item */}
                 <div className="flex items-start gap-4 group">
                   <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 text-[#14B8A6] group-hover:scale-110 transition-transform">
                     <Envelope size={24} weight="bold" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900">Email</h3>
-                    <p className="text-slate-500 text-sm font-medium">Dakshahir14@gmail.com</p>
+                    <p className="text-slate-500 text-sm font-medium">evanshservices24651@gmail.com</p>
                   </div>
                 </div>
 
-                {/* Contact Item */}
                 <div className="flex items-start gap-4 group">
                   <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 text-[#14B8A6] group-hover:scale-110 transition-transform">
                     <MapPin size={24} weight="bold" />
@@ -78,7 +184,6 @@ const ContactPage = () => {
 
             {/* Contact Form */}
             <div className="relative">
-              {/* Glassmorphic Card */}
               <div className="bg-white/70 backdrop-blur-xl border border-white/40 p-8 md:p-10 rounded-[40px] shadow-2xl shadow-slate-200/50 relative z-10">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="bg-teal-50 p-2.5 rounded-xl text-[#14B8A6]">
@@ -86,47 +191,130 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900">Send us a message</h2>
-                    <p className="text-slate-500 text-sm">Fill out the form below and we will get back to you.</p>
+                    <p className="text-slate-500 text-sm">Fill out the form and we will get back to you.</p>
                   </div>
                 </div>
 
-                <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+                {/* Success Message */}
+                {submitStatus === "success" && (
+                  <div className="flex items-start gap-3 bg-green-50 border border-green-200 text-green-700 rounded-2xl p-4 mb-6 animate-in fade-in slide-in-from-top-2">
+                    <CheckCircle size={22} weight="fill" className="flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-sm">Message Sent Successfully!</p>
+                      <p className="text-xs mt-0.5 opacity-80">We&apos;ll get back to you as soon as possible.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {submitStatus === "error" && (
+                  <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4 mb-6">
+                    <Warning size={22} weight="fill" className="flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-sm">Failed to send message</p>
+                      <p className="text-xs mt-0.5 opacity-80">{errorMessage}</p>
+                    </div>
+                  </div>
+                )}
+
+                <form className="space-y-5" onSubmit={handleSubmit} noValidate>
                   <div className="grid md:grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                      <input 
-                        type="text" 
-                        placeholder="Name" 
-                        className="w-full bg-white/50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 transition-all font-medium"
+                    <div className="space-y-1.5">
+                      <input
+                        id="contact-name"
+                        type="text"
+                        name="name"
+                        placeholder="Name *"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className={inputClass("name")}
                       />
+                      {errors.name && (
+                        <p className="text-red-500 text-xs pl-1">{errors.name}</p>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      <input 
-                        type="email" 
-                        placeholder="Email" 
-                        className="w-full bg-white/50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 transition-all font-medium"
+                    <div className="space-y-1.5">
+                      <input
+                        id="contact-email"
+                        type="email"
+                        name="email"
+                        placeholder="Email *"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={inputClass("email")}
                       />
+                      {errors.email && (
+                        <p className="text-red-500 text-xs pl-1">{errors.email}</p>
+                      )}
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <input 
-                      type="text" 
-                      placeholder="Subject" 
-                      className="w-full bg-white/50 border border-slate-100 rounded-2xl p-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 transition-all font-medium"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <textarea 
-                      placeholder="Message" 
-                      rows={4}
-                      className="w-full bg-white/50 border border-slate-100 rounded-3xl p-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 transition-all font-medium resize-none"
-                    ></textarea>
                   </div>
 
-                  <button 
+                  <div className="space-y-1.5">
+                    <input
+                      id="contact-phone"
+                      type="tel"
+                      name="phone"
+                      placeholder="Phone Number (optional)"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className={inputClass("phone")}
+                    />
+                    {errors.phone && (
+                      <p className="text-red-500 text-xs pl-1">{errors.phone}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <input
+                      id="contact-subject"
+                      type="text"
+                      name="subject"
+                      placeholder="Subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      className={inputClass("subject")}
+                    />
+                    {errors.subject && (
+                      <p className="text-red-500 text-xs pl-1">{errors.subject}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <textarea
+                      id="contact-message"
+                      name="message"
+                      placeholder="Message"
+                      rows={4}
+                      value={formData.message}
+                      onChange={handleChange}
+                      className={`${inputClass("message")} rounded-3xl resize-none`}
+                    ></textarea>
+                    {errors.message && (
+                      <p className="text-red-500 text-xs pl-1">{errors.message}</p>
+                    )}
+                  </div>
+
+                  <button
+                    id="contact-submit"
                     type="submit"
-                    className="bg-slate-900 text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 group shadow-lg shadow-slate-200"
+                    disabled={submitStatus === "loading"}
+                    className="bg-slate-900 text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 group shadow-lg shadow-slate-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
                   >
-                    Send Message <PaperPlaneRight size={20} weight="bold" className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    {submitStatus === "loading" ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        Send Message
+                        <PaperPlaneRight
+                          size={20}
+                          weight="bold"
+                          className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
+                        />
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
@@ -140,17 +328,17 @@ const ContactPage = () => {
           {/* Map Section */}
           <div className="mb-24 relative group">
             <div className="overflow-hidden rounded-[40px] shadow-2xl shadow-slate-200 border-8 border-white transition-transform duration-500 group-hover:scale-[1.01]">
-              <iframe 
-                src="https://www.google.com/maps?q=SDB+-+82,+Ward+2A,1st+Floor,+Above+Yuva+Collection,+Adipur,Gandhidham,+Gujarat+370205&output=embed" 
-                width="100%" 
-                height="450" 
-                style={{ border: 0 }} 
-                allowFullScreen={true} 
-                loading="lazy" 
+              <iframe
+                src="https://www.google.com/maps?q=SDB+-+82,+Ward+2A,1st+Floor,+Above+Yuva+Collection,+Adipur,Gandhidham,+Gujarat+370205&output=embed"
+                width="100%"
+                height="450"
+                style={{ border: 0 }}
+                allowFullScreen={true}
+                loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="grayscale-[0.1] hover:grayscale-0 transition-all duration-700"
               ></iframe>
-              
+
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
                 <div className="flex flex-col items-center">
                   <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-2xl border border-slate-100 flex items-center gap-2 mb-2">
@@ -208,9 +396,9 @@ const ContactPage = () => {
             </div>
 
             <div className="hidden lg:flex items-center justify-center pt-8">
-              <img 
-                src="https://img.freepik.com/free-vector/flat-style-man-working-laptop_23-2148118023.jpg" 
-                alt="Contact Support Illustration" 
+              <img
+                src="https://img.freepik.com/free-vector/flat-style-man-working-laptop_23-2148118023.jpg"
+                alt="Contact Support Illustration"
                 className="w-full max-w-[200px] h-auto rounded-3xl mix-blend-multiply"
               />
             </div>
@@ -223,3 +411,4 @@ const ContactPage = () => {
 };
 
 export default ContactPage;
+
