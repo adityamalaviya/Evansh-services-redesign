@@ -1,6 +1,5 @@
 import React from "react";
-import Header from "@frontend/components/Navigation/Header/Header";
-import Footer from "@frontend/components/Navigation/Footer/Footer";
+import { Header, Footer } from "@frontend/components";
 import Works from "@frontend/modules/Works/Components/Works";
 
 export default function WorksPage() {

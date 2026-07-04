@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
-import { 
-  ArrowLeft, 
-  UploadSimple, 
-  X, 
-  Check, 
-  WarningCircle, 
+import {
+  ArrowLeft,
+  UploadSimple,
+  X,
+  Check,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,7 +26,7 @@ export default function NewProjectPage() {
   const [order, setOrder] = useState<number>(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,20 +53,18 @@ export default function NewProjectPage() {
 
     try {
       let imageId = "";
-      
-      // 1. Upload image if exists
+
       if (imageFile) {
         const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
         imageId = uploadedFile.$id;
       }
 
-      // 2. Create document in database
       await databases.createDocument(DB_ID, PROJECTS_COLLECTION_ID, ID.unique(), {
         title,
         description,
         category,
         imageId,
-        order: Number(order)
+        order: Number(order),
       });
 
       router.push("/admin/projects");
@@ -83,24 +81,24 @@ export default function NewProjectPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-4">
-        <Link 
-          href="/admin/projects" 
-          className="p-2.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-xl transition-all"
+        <Link
+          href="/admin/projects"
+          className="p-2.5 text-slate-500 hover:text-[#14B8A6] bg-white border border-slate-200 rounded-xl transition-all hover:border-teal-200"
         >
           <ArrowLeft size={18} weight="bold" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-white">Add New Project</h1>
-          <p className="text-slate-400 text-sm">Create a new project in your portfolio</p>
+          <h1 className="text-2xl font-black text-[#1E1E24]">Add New Project</h1>
+          <p className="text-slate-500 text-sm">Create a new project in your portfolio</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-8 shadow-2xl">
-          
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-8 shadow-sm">
+
           {/* Error Alert */}
           {error && (
-            <div className="flex items-start gap-3 bg-red-950/40 border border-red-800/40 text-red-300 rounded-xl p-4 text-sm animate-shake">
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
               <WarningCircle size={20} className="flex-shrink-0 mt-0.5" />
               {error}
             </div>
@@ -117,7 +115,7 @@ export default function NewProjectPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Kutch Uday Billing System"
                   required
-                  className="w-full bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6]/60 transition-all"
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
                 />
               </div>
 
@@ -126,9 +124,9 @@ export default function NewProjectPage() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6]/60 transition-all appearance-none"
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
                 >
-                  {CATEGORIES.map(cat => (
+                  {CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
@@ -140,9 +138,9 @@ export default function NewProjectPage() {
                   type="number"
                   value={order}
                   onChange={(e) => setOrder(parseInt(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6]/60 transition-all"
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
                 />
-                <p className="text-[10px] text-slate-500 mt-1 pl-1 italic">Lower numbers appear first on the website.</p>
+                <p className="text-[10px] text-slate-400 mt-1 pl-1 italic">Lower numbers appear first on the website.</p>
               </div>
             </div>
 
@@ -159,34 +157,36 @@ export default function NewProjectPage() {
                     required
                   />
                   <div className={`h-full min-h-[220px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-6 transition-all duration-300 ${
-                    imagePreview ? "border-teal-500/50 bg-teal-500/5" : "border-slate-800 bg-slate-800/30 group-hover/upload:border-slate-700 group-hover/upload:bg-slate-800/50"
+                    imagePreview
+                      ? "border-teal-400 bg-teal-50/50"
+                      : "border-slate-200 bg-slate-50 group-hover/upload:border-[#14B8A6]/50 group-hover/upload:bg-teal-50/30"
                   }`}>
                     {imagePreview ? (
-                      <div className="relative w-full h-full min-h-[140px] rounded-lg overflow-hidden border border-teal-500/30">
+                      <div className="relative w-full h-full min-h-[140px] rounded-lg overflow-hidden border border-teal-200">
                         <Image
                           src={imagePreview}
                           alt="Preview"
                           fill
                           className="object-cover"
                         />
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.preventDefault();
                             setImagePreview(null);
                             setImageFile(null);
                           }}
-                          className="absolute top-2 right-2 bg-slate-900/80 p-1.5 rounded-lg text-white hover:bg-red-500 transition-colors z-20"
+                          className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors z-20 border border-slate-200"
                         >
                           <X size={16} />
                         </button>
                       </div>
                     ) : (
                       <>
-                        <div className="bg-slate-800 p-4 rounded-full mb-4 text-slate-500 group-hover/upload:text-teal-400 transition-colors">
+                        <div className="bg-white border border-slate-200 p-4 rounded-full mb-4 text-slate-400 group-hover/upload:text-[#14B8A6] group-hover/upload:border-teal-200 transition-colors shadow-sm">
                           <UploadSimple size={32} />
                         </div>
-                        <p className="text-sm font-bold text-slate-300">Click to upload image</p>
-                        <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">PNG, JPG up to 2MB</p>
+                        <p className="text-sm font-bold text-slate-600">Click to upload image</p>
+                        <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">PNG, JPG up to 2MB</p>
                       </>
                     )}
                   </div>
@@ -203,16 +203,16 @@ export default function NewProjectPage() {
               placeholder="Tell us about the project details..."
               rows={4}
               required
-              className="w-full bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6]/60 transition-all resize-none"
+              className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all resize-none"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#14B8A6] hover:bg-[#0D9488] text-white font-black py-4 rounded-2xl shadow-xl shadow-teal-950/40 hover:shadow-teal-900/60 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+              className="w-full bg-[#14B8A6] hover:bg-[#0D9488] text-white font-black py-4 rounded-2xl shadow-md shadow-teal-200/60 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-60"
             >
               {isSubmitting ? (
                 <>
@@ -228,7 +228,7 @@ export default function NewProjectPage() {
             </button>
             <Link
               href="/admin/projects"
-              className="w-full sm:w-auto text-slate-500 hover:text-slate-300 font-bold px-8 py-4 transition-colors text-center"
+              className="w-full sm:w-auto text-slate-400 hover:text-slate-600 font-bold px-8 py-4 transition-colors text-center"
             >
               Cancel
             </Link>
@@ -237,10 +237,10 @@ export default function NewProjectPage() {
       </form>
 
       {/* Warning Info */}
-      <div className="bg-amber-950/20 border border-amber-900/30 rounded-2xl p-6 flex gap-4">
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex gap-4">
         <WarningCircle size={24} className="text-amber-500 flex-shrink-0" weight="duotone" />
-        <p className="text-slate-400 text-sm leading-relaxed">
-          <span className="text-amber-500 font-bold">Important:</span> Make sure your Appwrite Storage bucket has "Public" permissions or "Read" access for everyone if you want the images to be visible on the public website.
+        <p className="text-slate-500 text-sm leading-relaxed">
+          <span className="text-amber-600 font-bold">Important:</span> Make sure your Appwrite Storage bucket has "Public" permissions or "Read" access for everyone if you want the images to be visible on the public website.
         </p>
       </div>
     </div>

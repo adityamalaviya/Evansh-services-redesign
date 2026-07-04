@@ -3,12 +3,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
-import { 
-  ArrowLeft, 
-  UploadSimple, 
-  Check, 
-  WarningCircle, 
-  Trash
+import {
+  ArrowLeft,
+  UploadSimple,
+  Check,
+  WarningCircle,
+  Trash,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -27,7 +27,7 @@ export default function EditProjectPage() {
   const [currentImageId, setCurrentImageId] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -41,7 +41,7 @@ export default function EditProjectPage() {
       setCategory(doc.category);
       setOrder(doc.order || 0);
       setCurrentImageId(doc.imageId || "");
-      
+
       if (doc.imageId) {
         const preview: any = storage.getFilePreview(BUCKET_ID, doc.imageId);
         setImagePreview(preview.toString());
@@ -80,24 +80,21 @@ export default function EditProjectPage() {
 
     try {
       let finalImageId = currentImageId;
-      
-      // 1. If new image uploaded
+
       if (imageFile) {
-        // Delete old image if exists
         if (currentImageId) {
-          try { await storage.deleteFile(BUCKET_ID, currentImageId); } catch(e) {}
+          try { await storage.deleteFile(BUCKET_ID, currentImageId); } catch (e) {}
         }
         const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
         finalImageId = uploadedFile.$id;
       }
 
-      // 2. Update document
       await databases.updateDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId, {
         title,
         description,
         category,
         imageId: finalImageId,
-        order: Number(order)
+        order: Number(order),
       });
 
       router.push("/admin/projects");
@@ -127,7 +124,7 @@ export default function EditProjectPage() {
   if (isLoading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-teal-200 border-t-[#14B8A6] rounded-full animate-spin" />
       </div>
     );
   }
@@ -136,23 +133,34 @@ export default function EditProjectPage() {
     <div className="max-w-3xl mx-auto space-y-8 pb-20">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin/projects" className="p-2.5 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-xl">
+          <Link
+            href="/admin/projects"
+            className="p-2.5 text-slate-500 hover:text-[#14B8A6] bg-white border border-slate-200 rounded-xl transition-all hover:border-teal-200"
+          >
             <ArrowLeft size={18} weight="bold" />
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-white">Edit Project</h1>
-            <p className="text-slate-400 text-sm">Modify existing project details</p>
+            <h1 className="text-2xl font-black text-[#1E1E24]">Edit Project</h1>
+            <p className="text-slate-500 text-sm">Modify existing project details</p>
           </div>
         </div>
-        <button onClick={handleDelete} className="p-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
-          <Trash size={24} weight="duotone" />
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border border-slate-200 hover:border-red-200 disabled:opacity-50"
+        >
+          {isDeleting ? (
+            <div className="w-5 h-5 border-2 border-slate-300 border-t-red-400 rounded-full animate-spin" />
+          ) : (
+            <Trash size={22} weight="duotone" />
+          )}
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-8 shadow-2xl">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-8 shadow-sm">
           {error && (
-            <div className="flex items-start gap-3 bg-red-950/40 border border-red-800/40 text-red-300 rounded-xl p-4 text-sm animate-shake">
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
               <WarningCircle size={20} className="flex-shrink-0 mt-0.5" />
               {error}
             </div>
@@ -166,7 +174,7 @@ export default function EditProjectPage() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm font-medium focus:border-teal-500/60"
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
                 />
               </div>
               <div className="space-y-2">
@@ -174,9 +182,9 @@ export default function EditProjectPage() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm font-medium focus:border-teal-500/60 appearance-none"
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
                 >
-                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
@@ -185,7 +193,7 @@ export default function EditProjectPage() {
                   type="number"
                   value={order}
                   onChange={(e) => setOrder(parseInt(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
                 />
               </div>
             </div>
@@ -199,16 +207,23 @@ export default function EditProjectPage() {
                   onChange={handleImageChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="h-full rounded-2xl border-2 border-dashed border-slate-800 bg-slate-800/30 flex flex-col items-center justify-center p-6">
+                <div className="h-full rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 group-hover/upload:border-[#14B8A6]/50 group-hover/upload:bg-teal-50/30 transition-all">
                   {imagePreview ? (
-                    <div className="relative w-full h-full rounded-lg overflow-hidden">
+                    <div className="relative w-full h-full rounded-lg overflow-hidden border border-slate-200">
                       <Image src={imagePreview} alt="Preview" fill className="object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 flex items-center justify-center transition-opacity">
-                         <div className="bg-white/20 backdrop-blur-md p-2 rounded-lg"><UploadSimple size={24} className="text-white" /></div>
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/upload:opacity-100 flex items-center justify-center transition-opacity">
+                        <div className="bg-white/80 backdrop-blur-sm p-2 rounded-lg border border-white">
+                          <UploadSimple size={24} className="text-slate-600" />
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <UploadSimple size={32} className="text-slate-500" />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="bg-white border border-slate-200 p-3 rounded-full text-slate-400 group-hover/upload:text-[#14B8A6] transition-colors shadow-sm">
+                        <UploadSimple size={28} />
+                      </div>
+                      <p className="text-sm text-slate-500 font-medium">Click to upload image</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -221,16 +236,20 @@ export default function EditProjectPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm font-medium resize-none"
+              className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all resize-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting || isDeleting}
-            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-teal-950/40 transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+            className="w-full bg-[#14B8A6] hover:bg-[#0D9488] text-white font-black py-4 rounded-2xl shadow-md shadow-teal-200/60 transition-all flex items-center justify-center gap-3 disabled:opacity-60 active:scale-95"
           >
-            {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Check size={20} weight="bold" /> Update Project</>}
+            {isSubmitting ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <><Check size={20} weight="bold" /> Update Project</>
+            )}
           </button>
         </div>
       </form>

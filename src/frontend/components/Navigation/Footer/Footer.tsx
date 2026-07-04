@@ -2,124 +2,134 @@
 
 import React from "react";
 import Link from "next/link";
-import { Hexagon, InstagramLogo, LinkedinLogo, TwitterLogo, YoutubeLogo, ArrowRight } from "@phosphor-icons/react";
+import {
+	Hexagon,
+	InstagramLogo,
+	LinkedinLogo,
+	TwitterLogo,
+	YoutubeLogo
+} from "@phosphor-icons/react";
+import { motion, useReducedMotion } from "motion/react";
 import { tokens } from "@frontend/styles/tokens";
 
+type AnimatedContainerProps = React.ComponentProps<typeof motion.div> & {
+	children?: React.ReactNode;
+	delay?: number;
+};
+
+function AnimatedContainer({
+	delay = 0.1,
+	children,
+	...props
+}: AnimatedContainerProps) {
+	const shouldReduceMotion = useReducedMotion();
+
+	if (shouldReduceMotion) {
+		return <div {...(props as any)}>{children}</div>;
+	}
+
+	return (
+		<motion.div
+			initial={{ filter: "blur(4px)", translateY: -8, opacity: 0 }}
+			whileInView={{ filter: "blur(0px)", translateY: 0, opacity: 1 }}
+			viewport={{ once: true }}
+			transition={{ delay, duration: 0.8 }}
+			{...props}
+		>
+			{children}
+		</motion.div>
+	);
+}
+
 const Footer: React.FC = () => {
-  return (
-    <footer className="bg-slate-900 pt-16 md:pt-24 pb-8 md:pb-12 text-slate-400 overflow-hidden relative">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-[128px] -z-10"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px] -z-10"></div>
+	return (
+		<footer
+			className="w-full border-t border-teal-900/40 relative"
+			style={{
+				background: "linear-gradient(135deg, #020c10 0%, #051a1a 50%, #020c10 100%)",
+			}}
+		>
+			{/* Decorative Elements */}
+			<div className="absolute top-0 left-1/3 w-80 h-80 bg-teal-500/8 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+			<div className="absolute bottom-0 right-1/4 w-72 h-72 bg-teal-400/6 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+			<div className="absolute top-1/2 left-0 w-48 h-48 bg-teal-600/5 rounded-full blur-[80px] -z-10 pointer-events-none"></div>
 
-      <div className={tokens.spacing.container}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mb-16 md:mb-20">
-          {/* Brand Column */}
-          <div className="lg:col-span-1 text-center md:text-left">
-            <Link href="/" className="flex items-center justify-center md:justify-start gap-3 mb-6 md:mb-8 group">
-              <div className="bg-white p-2 rounded-xl transition-transform group-hover:rotate-12">
-                <Hexagon size={24} weight="fill" className="text-slate-900" />
-              </div>
-              <span className="text-2xl font-bold tracking-tight text-white">
-                Evansh Services
-              </span>
-            </Link>
-            <p className="text-slate-400 leading-relaxed mb-8 font-medium text-sm md:text-base">
-              Empowering students through concept-based learning and expert guidance for a brighter future.
-            </p>
-            <div className="flex items-center justify-center md:justify-start gap-4">
-              {/* Icons ... */}
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white hover:bg-[#14B8A6] transition-all">
-                <InstagramLogo size={20} weight="bold" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white hover:bg-[#14B8A6] transition-all">
-                <LinkedinLogo size={20} weight="bold" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white hover:bg-[#14B8A6] transition-all">
-                <TwitterLogo size={20} weight="bold" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white hover:bg-[#14B8A6] transition-all">
-                <YoutubeLogo size={20} weight="bold" />
-              </a>
-            </div>
-          </div>
+			<div className={`${tokens.spacing.container} py-14 md:py-16 flex flex-col gap-10`}>
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
 
-          {/* Quick Links */}
-          <div className="text-center md:text-left">
-            <h3 className="text-white font-bold text-sm mb-6 uppercase tracking-widest">Navigation</h3>
-            <ul className="space-y-4">
-              {["Home", "Courses", "About Us", "Contact", "Services"].map((item) => (
-                <li key={item}>
-                  <Link 
-                    href={
-                      item === "Home" ? "/" :
-                      item === "Courses" ? "/courses" :
-                      item === "About Us" ? "/about" :
-                      item === "Contact" ? "/contact" :
-                      item === "Services" ? "/services" :
-                      `/#${item.toLowerCase()}`
-                    } 
-                    className="group relative hover:text-[#14B8A6] transition-all inline-block font-medium text-sm"
-                  >
-                    {item}
-                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#14B8A6] transition-all duration-300 group-hover:w-full"></span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+					{/* Brand Column */}
+					<AnimatedContainer className="text-center md:text-left flex flex-col items-center md:items-start">
+						<Link href="/" className="flex items-center gap-3 mb-5 group">
+							<div className="bg-gradient-to-br from-teal-400 to-teal-600 p-2 rounded-xl transition-transform group-hover:rotate-12 shadow-lg shadow-teal-500/20">
+								<Hexagon size={22} weight="fill" className="text-white" />
+							</div>
+							<span className="text-xl font-bold tracking-tight text-white">
+								Evansh Services
+							</span>
+						</Link>
+						<p className="text-slate-400 leading-relaxed mb-6 font-medium text-sm max-w-xs">
+							Empowering students through concept-based learning and expert guidance for a brighter future.
+						</p>
+						<div className="flex items-center gap-2.5 justify-center md:justify-start">
+							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
+								<InstagramLogo size={17} weight="bold" />
+							</a>
+							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
+								<LinkedinLogo size={17} weight="bold" />
+							</a>
+							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
+								<TwitterLogo size={17} weight="bold" />
+							</a>
+							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
+								<YoutubeLogo size={17} weight="bold" />
+							</a>
+						</div>
+					</AnimatedContainer>
 
-          {/* Contact Details */}
-          <div className="text-center md:text-left">
-            <h3 className="text-white font-bold text-sm mb-6 uppercase tracking-widest">Contact Us</h3>
-            <ul className="space-y-4 md:space-y-6">
-              <li>
-                <span className="block text-[10px] md:text-xs uppercase tracking-widest text-slate-500 mb-1 font-bold">Email</span>
-                <a href="mailto:Dakshahir14@gmail.com" className="text-white text-sm md:text-base font-bold hover:text-[#14B8A6] transition-colors">
-                  Dakshahir14@gmail.com
-                </a>
-              </li>
-              <li>
-                <span className="block text-[10px] md:text-xs uppercase tracking-widest text-slate-500 mb-1 font-bold">Phone</span>
-                <a href="tel:+916351938789" className="text-white text-sm md:text-base font-bold hover:text-[#14B8A6] transition-colors">
-                  +91 6351938789
-                </a>
-              </li>
-            </ul>
-          </div>
+					{/* Explore Column */}
+					<AnimatedContainer delay={0.1} className="text-center md:text-left">
+						<h3 className="text-teal-400 font-bold text-xs mb-5 uppercase tracking-[0.2em]">Explore</h3>
+						<ul className="space-y-4">
+							<li><Link href="/" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Home</Link></li>
+							<li><Link href="/about" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">About Us</Link></li>
+							<li><Link href="/works" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Our Work</Link></li>
+							<li><Link href="/services" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Services</Link></li>
+							<li><Link href="/contact" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Contact</Link></li>
+						</ul>
+					</AnimatedContainer>
 
-          {/* Newsletter Column */}
-          <div className="bg-slate-800/30 md:bg-slate-800/50 p-6 md:p-8 rounded-[32px] border border-slate-700/50">
-            <h3 className="text-white font-bold text-lg mb-4">Newsletter</h3>
-            <p className="text-xs md:text-sm text-slate-400 mb-6 font-medium leading-relaxed">
-              Stay updated with news from Evansh Services.
-            </p>
-            <div className="relative">
-              <input 
-                type="email" 
-                placeholder="Your email" 
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3.5 px-5 text-white text-xs focus:outline-none focus:border-[#14B8A6]"
-              />
-              <button className="absolute right-1.5 top-1.5 bottom-1.5 bg-[#14B8A6] text-white px-3 rounded-lg hover:bg-[#119989] transition-all">
-                <ArrowRight size={18} weight="bold" />
-              </button>
-            </div>
-          </div>
-        </div>
+					{/* Contact Us Column */}
+					<AnimatedContainer delay={0.2} className="text-center md:text-left">
+						<h3 className="text-teal-400 font-bold text-xs mb-5 uppercase tracking-[0.2em]">Contact Us</h3>
+						<ul className="space-y-5">
+							<li>
+								<span className="block text-[10px] uppercase tracking-widest text-teal-600 mb-1.5 font-semibold">Email</span>
+								<a href="mailto:evanshservices24651@gmail.com" className="text-slate-200 text-sm font-semibold hover:text-teal-400 transition-colors duration-200">
+									evanshservices24651@gmail.com
+								</a>
+							</li>
+							<li>
+								<span className="block text-[10px] uppercase tracking-widest text-teal-600 mb-1.5 font-semibold">Phone</span>
+								<a href="tel:NA" className="text-slate-200 text-sm font-semibold hover:text-teal-400 transition-colors duration-200">
+									NA
+								</a>
+							</li>
+						</ul>
+					</AnimatedContainer>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-center">
-          <p className="text-xs font-medium">
-            © {new Date().getFullYear()} Evansh Services.
-          </p>
-          <div className="flex gap-6 text-xs font-medium">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+				</div>
+
+				{/* Bottom Bar */}
+				<div className="pt-5 border-t border-teal-900/30 flex flex-col md:flex-row justify-between items-center gap-3 text-center text-xs font-medium text-slate-500">
+					<p>© {new Date().getFullYear()} Evansh Services. All rights reserved.</p>
+					<div className="flex gap-6">
+						<a href="#" className="hover:text-teal-400 transition-colors duration-200">Privacy</a>
+						<a href="#" className="hover:text-teal-400 transition-colors duration-200">Terms</a>
+					</div>
+				</div>
+			</div>
+		</footer>
+	);
 };
 
 export default Footer;
