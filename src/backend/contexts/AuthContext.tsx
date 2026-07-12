@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   user: Models.User<Models.Preferences> | null;
   login: (email: string, pass: string) => Promise<void>;
-  loginWithGoogle: () => void;
+  loginWithGoogle: (successRedirect?: string) => void;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -50,14 +50,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoggedIn(true);
   };
 
-  const loginWithGoogle = () => {
+  const loginWithGoogle = (successRedirect?: string) => {
     // Appwrite Google OAuth
-    // The redirect URL should be your app's base URL
+    // After OAuth, redirect back to the login page so AuthLoginPage
+    // can detect the active session and route the user appropriately.
     const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const successUrl = successRedirect
+      ? `${origin}${successRedirect}`
+      : `${origin}/login`;
     account.createOAuth2Session(
       OAuthProvider.Google,
-      `${origin}/`, // Success redirect
-      `${origin}/login` // Failure redirect
+      successUrl,         // Success: back to login or a specific page
+      `${origin}/login`   // Failure: back to login page
     );
   };
 

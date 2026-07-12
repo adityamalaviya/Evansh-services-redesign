@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
+import * as Sentry from "@sentry/nextjs";
 
 const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing"];
 
@@ -100,7 +101,8 @@ export default function EditProjectPage() {
       router.push("/admin/projects");
       router.refresh();
     } catch (err: any) {
-      setError(err.message || "Failed to update project.");
+      Sentry.captureException(err);
+      setError("Failed to update project. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +118,8 @@ export default function EditProjectPage() {
       await databases.deleteDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId);
       router.push("/admin/projects");
     } catch (err) {
-      setError("Failed to delete project.");
+      Sentry.captureException(err);
+      setError("Failed to delete project. Please try again.");
       setIsDeleting(false);
     }
   };

@@ -11,7 +11,8 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
   return (
     <html>
       <body>
-        <h1>Something went wrong</h1>
+        <h1>Something went wrong.</h1>
+        <p>We have been notified and are working on a fix.</p>
       </body>
     </html>
   );

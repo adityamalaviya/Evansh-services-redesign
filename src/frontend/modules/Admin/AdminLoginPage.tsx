@@ -104,6 +104,7 @@ export default function AdminLoginPage() {
                   placeholder="admin@evansh.com"
                   required
                   className="w-full bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl pl-12 pr-4 py-3.5 text-sm font-medium focus:outline-none focus:border-[#14B8A6]/60 focus:ring-2 focus:ring-[#14B8A6]/20 transition-all"
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -124,11 +125,13 @@ export default function AdminLoginPage() {
                   placeholder="••••••••"
                   required
                   className="w-full bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl pl-12 pr-12 py-3.5 text-sm font-medium focus:outline-none focus:border-[#14B8A6]/60 focus:ring-2 focus:ring-[#14B8A6]/20 transition-all"
+                  suppressHydrationWarning
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+                  suppressHydrationWarning
                 >
                   {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
                 </button>
@@ -140,6 +143,7 @@ export default function AdminLoginPage() {
               type="submit"
               disabled={isSubmitting}
               className="w-full bg-[#14B8A6] hover:bg-[#0D9488] text-white font-bold py-4 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-teal-900/40 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 mt-2"
+              suppressHydrationWarning
             >
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

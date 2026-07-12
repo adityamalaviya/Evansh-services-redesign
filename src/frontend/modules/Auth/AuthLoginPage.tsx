@@ -12,6 +12,21 @@ import {
 } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@backend/contexts/AuthContext";
+import { z } from "zod";
+import DOMPurify from "dompurify";
+import * as Sentry from "@sentry/nextjs";
+
+const clean = (val: string): string => DOMPurify.sanitize(val.trim());
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginFieldErrors = {
+  email?: string;
+  password?: string;
+};
 
 export default function AuthLoginPage() {
   const router = useRouter();
@@ -22,6 +37,13 @@ export default function AuthLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
+
+  const clearFieldError = (field: keyof LoginFieldErrors): void => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
 
   // Build the post-login redirect URL (preserving ?course= if present)
   const getRedirectUrl = (isAdmin: boolean): string => {
@@ -46,21 +68,41 @@ export default function AuthLoginPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isLoggedIn, user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
+
+    const parsed = loginSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      const errs: LoginFieldErrors = {};
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0] as keyof LoginFieldErrors;
+        if (!errs[field]) errs[field] = issue.message;
+      }
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+
+    setIsSubmitting(true);
     try {
-      await login(email, password);
+      const cleanEmail = clean(email);
+      await login(cleanEmail, password);
 
       // Redirect: admin → /admin, everyone else → redirect param or home
       const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
-      const isAdmin = email.trim().toLowerCase() === adminEmail;
+      const isAdmin = cleanEmail.trim().toLowerCase() === adminEmail;
       router.push(getRedirectUrl(isAdmin));
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Invalid email or password. Please try again.";
-      console.error("Login failed:", err);
-      setError(message);
+      Sentry.captureException(err);
+      const raw = err instanceof Error ? err.message : "";
+      if (raw.toLowerCase().includes("invalid credential") || raw.toLowerCase().includes("invalid password") || raw.toLowerCase().includes("wrong password")) {
+        setError("Invalid email or password.");
+      } else if (raw.toLowerCase().includes("network") || raw.toLowerCase().includes("fetch")) {
+        setError("Connection failed. Please check your internet.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -68,9 +110,17 @@ export default function AuthLoginPage() {
 
   const handleSocialLogin = (label: string) => {
     if (label === "Google") {
-      loginWithGoogle();
-    } else {
-      console.log(`${label} login not implemented yet`);
+      // Pass the current redirect URL so after OAuth the user lands back on login
+      // with the same query params, and the useEffect redirects them correctly.
+      const redirectPath = searchParams.get("redirect");
+      const courseName = searchParams.get("course");
+      let successRedirect = "/login";
+      if (redirectPath) {
+        successRedirect = courseName
+          ? `/login?redirect=${encodeURIComponent(redirectPath)}&course=${encodeURIComponent(courseName)}`
+          : `/login?redirect=${encodeURIComponent(redirectPath)}`;
+      }
+      loginWithGoogle(successRedirect);
     }
   };
 
@@ -154,12 +204,15 @@ export default function AuthLoginPage() {
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
                       placeholder="username@gmail.com"
                       className="w-full pl-14 pr-5 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-[#14b8a6]/20 focus:ring-4 focus:ring-[#14b8a6]/5 transition-all duration-300 text-sm font-semibold"
-                      required
+                      suppressHydrationWarning
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className="text-red-500 text-xs pl-1 mt-1">{fieldErrors.email}</p>
+                  )}
                 </div>
 
                 {/* Password Field */}
@@ -172,19 +225,23 @@ export default function AuthLoginPage() {
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
                       placeholder="••••••••"
                       className="w-full pl-14 pr-14 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-[#14b8a6]/20 focus:ring-4 focus:ring-[#14b8a6]/5 transition-all duration-300 text-sm font-semibold"
-                      required
+                      suppressHydrationWarning
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-5 flex items-center text-slate-300 hover:text-slate-500 transition-colors duration-300"
+                      suppressHydrationWarning
                     >
                       {showPassword ? <EyeSlash size={22} /> : <Eye size={22} />}
                     </button>
                   </div>
+                  {fieldErrors.password && (
+                    <p className="text-red-500 text-xs pl-1 mt-1">{fieldErrors.password}</p>
+                  )}
                   <div className="text-right">
                     <Link href="/forgot-password" className="text-xs font-bold text-[#14b8a6] hover:text-[#0d9488] transition-colors">
                       Forgot Password?
@@ -198,6 +255,7 @@ export default function AuthLoginPage() {
                   disabled={isSubmitting}
                   className="w-full py-4.5 bg-[#14b8a6] hover:bg-[#0d9488] text-white rounded-2xl font-bold text-[15px] shadow-[0_12px_24px_rgba(20,184,166,0.25)] hover:shadow-[0_16px_32px_rgba(20,184,166,0.3)] active:scale-[0.98] transition-all duration-300 disabled:opacity-70 flex items-center justify-center gap-3 group/btn mt-4"
                   style={{ padding: "18px" }}
+                  suppressHydrationWarning
                 >
                   {isSubmitting ? (
                     <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
@@ -256,6 +314,7 @@ export default function AuthLoginPage() {
                       type="button"
                       onClick={() => handleSocialLogin(social.label)}
                       className={`w-24 h-14 flex items-center justify-center bg-white rounded-full border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_25px_rgba(0,0,0,0.1)] hover:-translate-y-1 active:translate-y-0 active:shadow-inner transition-all duration-300 group/social ${social.bg}`}
+                      suppressHydrationWarning
                     >
                       <div className="relative transform transition-transform duration-300 group-hover/social:scale-110 drop-shadow-[0_2px_4px_rgba(0,0,0,0.05)]">{social.icon}</div>
                     </button>

@@ -9,12 +9,6 @@ export function isAdmin(userEmail: string | null | undefined): boolean {
   const normalizedAdmin = ADMIN_EMAIL.trim().toLowerCase();
   const normalizedUser = (userEmail ?? '').trim().toLowerCase();
   
-  console.log("Checking Admin Access:", {
-    user: normalizedUser,
-    required: normalizedAdmin,
-    match: normalizedUser === normalizedAdmin
-  });
-
   if (!normalizedUser || !normalizedAdmin) return false;
   return normalizedUser === normalizedAdmin;
 }

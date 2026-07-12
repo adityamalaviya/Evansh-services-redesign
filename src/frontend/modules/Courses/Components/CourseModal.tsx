@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@backend/contexts/AuthContext";
 import {
   ArrowLeft,
   ArrowRight,
@@ -28,10 +29,15 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
   const [mounted, setMounted] = useState(false);
   const [isEnrollmentOpen, setIsEnrollmentOpen] = useState(false);
   const router = useRouter();
+  const { isLoggedIn } = useAuth();
 
   const handleStartLearning = () => {
-    const courseName = course?.title ?? "";
-    router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
+    if (isLoggedIn) {
+      setIsEnrollmentOpen(true);
+    } else {
+      const courseName = course?.title ?? "";
+      router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
+    }
   };
 
   useEffect(() => {

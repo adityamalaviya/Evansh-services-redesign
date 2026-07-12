@@ -3,6 +3,9 @@ export async function getPortalData(token: string) {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store'
   });
-  if (!res.ok) throw new Error('Failed to fetch');
+  if (!res.ok) {
+    console.error(`API error: ${res.status} ${res.url}`);
+    return null;
+  }
   return res.json();
 }

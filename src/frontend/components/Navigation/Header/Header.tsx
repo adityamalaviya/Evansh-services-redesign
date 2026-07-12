@@ -2,12 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Hexagon, List, X } from "@phosphor-icons/react";
+import { ArrowRight, Hexagon, List, X, SignOut, UserCircle } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
+import { useAuth } from "@backend/contexts/AuthContext";
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const { isLoggedIn, isLoading, logout, user } = useAuth();
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -18,6 +20,66 @@ const Header: React.FC = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  // Auth button for desktop nav
+  const AuthButton = () => {
+    if (isLoading) return null;
+    if (isLoggedIn && user) {
+      return (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-teal-50 border border-teal-100 px-3 py-2 rounded-full">
+            <UserCircle size={20} weight="fill" className="text-[#14B8A6]" />
+            <span className="text-xs font-bold text-slate-700 max-w-[120px] truncate">
+              {user.name || user.email}
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-slate-100 text-slate-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-red-50 hover:text-red-500 transition-all"
+          >
+            <SignOut size={15} weight="bold" />
+            Logout
+          </button>
+        </div>
+      );
+    }
+    return (
+      <Link
+        href="/login"
+        className="group relative flex items-center gap-3 bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-all hover:scale-110 active:scale-95 shadow-lg shadow-slate-200 overflow-hidden"
+      >
+        Login <ArrowRight size={18} weight="bold" className="group-hover:translate-x-1 transition-transform" />
+      </Link>
+    );
+  };
+
+  // Auth button for mobile nav
+  const MobileAuthButton = () => {
+    if (isLoading) return null;
+    if (isLoggedIn && user) {
+      return (
+        <button
+          onClick={handleLogout}
+          className="bg-red-50 text-red-500 px-4 py-2 rounded-full text-xs font-bold flex-shrink-0 flex items-center gap-1"
+        >
+          <SignOut size={13} weight="bold" />
+          Logout
+        </button>
+      );
+    }
+    return (
+      <Link
+        href="/login"
+        className="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex-shrink-0"
+      >
+        Login
+      </Link>
+    );
+  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -36,14 +98,14 @@ const Header: React.FC = () => {
           </span>
         </Link>
 
-        {/* Navigation Section - Right aligned flat nav */}
+        {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1">
           <Link href="/" className="group relative px-5 py-2.5 text-sm font-bold text-slate-600 hover:text-[#14B8A6] transition-all rounded-full hover:bg-[#14B8A6]/10 hover:scale-110 active:scale-95 cursor-pointer">
             Home
             <span className="absolute bottom-1.5 left-1/2 w-0 h-0.5 bg-[#14B8A6] transition-all duration-300 group-hover:w-1/2 group-hover:left-1/4 rounded-full"></span>
           </Link>
-          <Link 
-            href="/#courses" 
+          <Link
+            href="/#courses"
             onClick={(e) => {
               if (window.location.pathname === '/') {
                 e.preventDefault();
@@ -73,24 +135,14 @@ const Header: React.FC = () => {
           </Link>
 
           <div className="ml-2">
-            <Link 
-              href="/login" 
-              className="group relative flex items-center gap-3 bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-all hover:scale-110 active:scale-95 shadow-lg shadow-slate-200 overflow-hidden"
-            >
-              Login <ArrowRight size={18} weight="bold" className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <AuthButton />
           </div>
         </nav>
 
         {/* Mobile Menu Toggle */}
         <div className="lg:hidden flex items-center gap-3">
-          <Link 
-            href="/login" 
-            className="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg flex-shrink-0"
-          >
-            Login
-          </Link>
-          <button 
+          <MobileAuthButton />
+          <button
             onClick={toggleMobileMenu}
             aria-label="Toggle Menu"
             className="p-2.5 text-slate-900 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all active:scale-90 z-[60] relative"
@@ -115,7 +167,7 @@ const Header: React.FC = () => {
             { name: "Contact", href: "/contact" },
             { name: "Services", href: "/services" }
           ].map((link) => (
-            <Link 
+            <Link
               key={link.name}
               href={link.href}
               onClick={(e) => {
@@ -130,15 +182,10 @@ const Header: React.FC = () => {
               {link.name}
             </Link>
           ))}
-          
-
         </nav>
       </div>
-
-
     </header>
   );
 };
 
 export default Header;
-

@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
+import * as Sentry from "@sentry/nextjs";
 
 const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing"];
 
@@ -70,8 +71,8 @@ export default function NewProjectPage() {
       router.push("/admin/projects");
       router.refresh();
     } catch (err: any) {
-      console.error("Creation error:", err);
-      setError(err.message || "Something went wrong while saving the project.");
+      Sentry.captureException(err);
+      setError("Something went wrong while saving the project. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

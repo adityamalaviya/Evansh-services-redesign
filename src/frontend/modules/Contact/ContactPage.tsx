@@ -16,6 +16,25 @@ import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
 import { databases, DB_ID, CONTACT_COLLECTION_ID, ID } from "@backend/services/appwrite";
 import { sendContactEmail } from "@backend/actions/email.actions";
+import { z } from "zod";
+import DOMPurify from "dompurify";
+import * as Sentry from "@sentry/nextjs";
+
+const clean = (val: string): string => DOMPurify.sanitize(val.trim());
+
+const contactSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email"),
+  phone: z
+    .string()
+    .refine(
+      (val) => val === "" || /^[0-9]{10}$/.test(val),
+      "Enter valid 10-digit number"
+    )
+    .optional(),
+  subject: z.string().min(1, "Subject is required"),
+  message: z.string().min(10, "Min 10 characters"),
+});
 
 interface ContactFormData {
   name: string;
@@ -49,27 +68,21 @@ const ContactPage = () => {
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required.";
+    const result = contactSchema.safeParse({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      subject: formData.subject,
+      message: formData.message,
+    });
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof FormErrors;
+        if (field && !newErrors[field]) {
+          newErrors[field] = issue.message;
+        }
+      }
     }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email.";
-    }
-    if (formData.phone.trim() && !/^[0-9+\-\s]{7,15}$/.test(formData.phone.trim())) {
-      newErrors.phone = "Please enter a valid phone number.";
-    }
-    if (!formData.subject.trim()) {
-      newErrors.subject = "Subject is required.";
-    }
-    if (!formData.message.trim()) {
-      newErrors.message = "Message is required.";
-    } else if (formData.message.trim().length < 10) {
-      newErrors.message = "Message must be at least 10 characters.";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -93,28 +106,39 @@ const ContactPage = () => {
     setErrorMessage("");
 
     try {
+      const cleanName = clean(formData.name);
+      const cleanEmail = clean(formData.email);
+      const cleanPhone = clean(formData.phone);
+      const cleanSubject = clean(formData.subject);
+      const cleanMessage = clean(formData.message);
+
       await databases.createDocument(DB_ID, CONTACT_COLLECTION_ID, ID.unique(), {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || "",
-        subject: formData.subject.trim(),
-        message: formData.message.trim(),
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone || "",
+        subject: cleanSubject,
+        message: cleanMessage,
       });
 
       // Send Email Notification
       await sendContactEmail({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || "",
-        subject: formData.subject.trim(),
-        message: formData.message.trim(),
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone || "",
+        subject: cleanSubject,
+        message: cleanMessage,
       });
 
       setSubmitStatus("success");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error occurred.";
-      setErrorMessage(`Failed to send: ${message}`);
+      Sentry.captureException(err);
+      const raw = err instanceof Error ? err.message : "";
+      if (raw.toLowerCase().includes("network") || raw.toLowerCase().includes("fetch")) {
+        setErrorMessage("Connection failed. Please check your internet.");
+      } else {
+        setErrorMessage("Something went wrong. Please try again.");
+      }
       setSubmitStatus("error");
     }
   };
