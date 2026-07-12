@@ -27,28 +27,60 @@ export default function NewProjectPage() {
   const [order, setOrder] = useState<number>(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    setImageError(null);
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setError("Image size should be less than 2MB");
+      // 1. FILE TYPE VALIDATION
+      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setImageError('Only JPG, PNG and WebP images are allowed.');
         return;
       }
-      setImageFile(file);
+
+      // 2. FILE SIZE VALIDATION
+      const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+      if (file.size > MAX_SIZE) {
+        setImageError('File size must be under 2MB.');
+        return;
+      }
+
+      // 3. FILE EXTENSION DOUBLE CHECK
+      const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        setImageError('Invalid file extension.');
+        return;
+      }
+
+      // 4. SANITIZE FILENAME before sending to Hono (Appwrite):
+      const safeName = file.name
+        .replace(/[^a-zA-Z0-9.\-_]/g, '_')
+        .toLowerCase();
+
+      const sanitizedFile = new File([file], safeName, { type: file.type });
+
+      setImageFile(sanitizedFile);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(sanitizedFile);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (imageError) return;
+    if (!imageFile) {
+      setImageError("Please upload a project thumbnail.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
 
@@ -175,6 +207,7 @@ export default function NewProjectPage() {
                             e.preventDefault();
                             setImagePreview(null);
                             setImageFile(null);
+                            setImageError(null);
                           }}
                           className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors z-20 border border-slate-200"
                         >
@@ -192,6 +225,9 @@ export default function NewProjectPage() {
                     )}
                   </div>
                 </div>
+                {imageError && (
+                  <p className="text-red-500 text-xs pl-1 mt-1">{imageError}</p>
+                )}
               </div>
             </div>
           </div>
