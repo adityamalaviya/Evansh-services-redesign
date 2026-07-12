@@ -7,7 +7,6 @@ export default function CoursesAdminPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [iconEmoji, setIconEmoji] = useState("");
-  const [themeColor, setThemeColor] = useState("#14B8A6");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,23 +59,7 @@ export default function CoursesAdminPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Theme Color (Hex)</label>
-                <div className="flex gap-4 items-center">
-                  <input
-                    type="color"
-                    value={themeColor}
-                    onChange={(e) => setThemeColor(e.target.value)}
-                    className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={themeColor}
-                    onChange={(e) => setThemeColor(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all uppercase"
-                  />
-                </div>
-              </div>
+
             </div>
           </div>
 

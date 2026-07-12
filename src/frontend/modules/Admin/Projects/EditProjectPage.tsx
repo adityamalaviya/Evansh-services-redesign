@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
-const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing", "Other Projects"];
+const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing"];
 
 export default function EditProjectPage() {
   const router = useRouter();

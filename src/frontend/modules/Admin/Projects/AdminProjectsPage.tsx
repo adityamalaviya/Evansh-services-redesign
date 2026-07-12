@@ -22,7 +22,7 @@ type Project = Models.Document & {
   order: number;
 };
 
-const CATEGORIES = ["All", "Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing", "Other Projects"];
+const CATEGORIES = ["All", "Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing"];
 
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
