@@ -1,5 +1,4 @@
 import ThreeDPrintingPage from "@frontend/modules/Works/ThreeDPrintingPage";
-export const revalidate = 600;
 
 export const metadata = {
   title: "3D Printing Projects - Evansh Services",

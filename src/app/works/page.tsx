@@ -1,5 +1,4 @@
 import WorksPage from "@frontend/modules/Works/WorksPage";
-export const revalidate = 600;
 
 export const metadata = {
   title: "Our Work - Evansh Services",

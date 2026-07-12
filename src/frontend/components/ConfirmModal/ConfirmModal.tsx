@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Warning, SignOut, X } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,6 +26,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = "Cancel",
   type = "warning",
 }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,7 +43,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen || typeof document === "undefined") return null;
+  if (!mounted || !isOpen) return null;
 
   const typeConfig = {
     danger: {
