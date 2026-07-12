@@ -13,7 +13,6 @@ import {
   Briefcase
 } from "@phosphor-icons/react";
 import EnrollmentModal from "./EnrollmentModal";
-import { useAuth } from "@backend/contexts/AuthContext";
 
 interface CourseModalProps {
   isOpen: boolean;
@@ -28,17 +27,11 @@ interface CourseModalProps {
 const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) => {
   const [mounted, setMounted] = useState(false);
   const [isEnrollmentOpen, setIsEnrollmentOpen] = useState(false);
-  const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
 
   const handleStartLearning = () => {
-    if (!isLoading && !isLoggedIn) {
-      // Redirect to login with a return path so we can auto-open the course modal after login
-      const courseName = course?.title ?? "";
-      router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
-    } else {
-      setIsEnrollmentOpen(true);
-    }
+    const courseName = course?.title ?? "";
+    router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
   };
 
   useEffect(() => {
@@ -101,7 +94,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
                   </div>
                   <button 
                     onClick={handleStartLearning}
-                    disabled={isLoading}
+                    disabled={false}
                     className="flex items-center justify-center gap-3 text-white px-10 py-4 rounded-2xl font-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-teal-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ backgroundColor: course.color }}
                   >

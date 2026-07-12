@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Globe, Laptop, Database, GraduationCap, Printer, Cube, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
+import { ArrowRight, Globe, Laptop, Database, GraduationCap, Printer, Cube, Image as ImageIcon } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import Header from "@frontend/components/Navigation/Header/Header";
 import Footer from "@frontend/components/Navigation/Footer/Footer";
