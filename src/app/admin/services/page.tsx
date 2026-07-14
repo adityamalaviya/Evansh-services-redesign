@@ -1,5 +1,5 @@
-import ServicesAdminPage from "@frontend/modules/Admin/Services/ServicesAdminPage";
+import AdminServicesPage from "@frontend/modules/Admin/Services/AdminServicesPage";
 
 export default function Page() {
-  return <ServicesAdminPage />;
+  return <AdminServicesPage />;
 }

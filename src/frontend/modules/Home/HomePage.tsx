@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Header, Hero, Courses, Footer } from "@frontend/components";
 
 export default function HomePage() {
@@ -7,12 +6,9 @@ export default function HomePage() {
       <Header />
       <main>
         <Hero />
-        <Suspense fallback={null}>
-          <Courses />
-        </Suspense>
+        <Courses />
       </main>
       <Footer />
     </div>
   );
 }
-

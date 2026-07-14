@@ -12,84 +12,26 @@ import {
 import { useRouter } from "next/navigation";
 import { account } from "@backend/services/appwrite";
 import { ID } from "appwrite";
-import { z } from "zod";
-import DOMPurify from "dompurify";
-import * as Sentry from "@sentry/nextjs";
-
-const clean = (val: string): string => DOMPurify.sanitize(val.trim());
-
-const registerSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type RegisterFieldErrors = {
-  name?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-};
 
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
 
-  const clearFieldError = (field: keyof RegisterFieldErrors): void => {
-    if (fieldErrors[field]) {
-      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    const parsed = registerSchema.safeParse({ name, email, password, confirmPassword });
-    if (!parsed.success) {
-      const errs: RegisterFieldErrors = {};
-      for (const issue of parsed.error.issues) {
-        const field = issue.path[0] as keyof RegisterFieldErrors;
-        if (!errs[field]) errs[field] = issue.message;
-      }
-      setFieldErrors(errs);
-      return;
-    }
-    setFieldErrors({});
-
     setIsSubmitting(true);
+    setError(null);
     try {
-      const cleanName = clean(name);
-      const cleanEmail = clean(email);
-      await account.create(ID.unique(), cleanEmail, password, cleanName);
-      await account.createEmailPasswordSession(cleanEmail, password);
+      await account.create(ID.unique(), email, password, name);
+      await account.createEmailPasswordSession(email, password);
       router.push("/");
-    } catch (err: unknown) {
-      Sentry.captureException(err);
-      const raw = err instanceof Error ? err.message : "";
-      if (raw.toLowerCase().includes("already exist") || raw.toLowerCase().includes("unique violation") || raw.toLowerCase().includes("duplicate")) {
-        setError("An account with this email already exists.");
-      } else if (raw.toLowerCase().includes("network") || raw.toLowerCase().includes("fetch")) {
-        setError("Connection failed. Please check your internet.");
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
+    } catch (err: any) {
+      console.error("Registration failed:", err);
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -113,7 +55,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
             <div className="relative">
@@ -121,15 +63,12 @@ export default function RegisterPage() {
               <input
                 type="text"
                 value={name}
-                onChange={(e) => { setName(e.target.value); clearFieldError("name"); }}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:outline-none focus:border-[#14b8a6]/30"
-                suppressHydrationWarning
+                required
               />
             </div>
-            {fieldErrors.name && (
-              <p className="text-red-500 text-xs pl-1">{fieldErrors.name}</p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -139,15 +78,12 @@ export default function RegisterPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:outline-none focus:border-[#14b8a6]/30"
-                suppressHydrationWarning
+                required
               />
             </div>
-            {fieldErrors.email && (
-              <p className="text-red-500 text-xs pl-1">{fieldErrors.email}</p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -157,40 +93,18 @@ export default function RegisterPage() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:outline-none focus:border-[#14b8a6]/30"
-                suppressHydrationWarning
+                required
               />
             </div>
-            {fieldErrors.password && (
-              <p className="text-red-500 text-xs pl-1">{fieldErrors.password}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Confirm Password</label>
-            <div className="relative">
-              <LockKey size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError("confirmPassword"); }}
-                placeholder="••••••••"
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:outline-none focus:border-[#14b8a6]/30"
-                suppressHydrationWarning
-              />
-            </div>
-            {fieldErrors.confirmPassword && (
-              <p className="text-red-500 text-xs pl-1">{fieldErrors.confirmPassword}</p>
-            )}
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full py-4 bg-[#14b8a6] hover:bg-[#0d9488] text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
-            suppressHydrationWarning
           >
             {isSubmitting ? "Creating Account..." : "Register Now"} <ArrowRight size={20} />
           </button>

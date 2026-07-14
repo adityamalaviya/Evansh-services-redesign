@@ -1,63 +1,101 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
+import { databases, DB_ID, SERVICES_COLLECTION_ID } from "@backend/services/appwrite";
+import { Query } from "appwrite";
 
-const services = [
+const staticServices = [
   {
     title: "Design & Development of Website and Web Portal",
-    description: "We build responsive, user-friendly websites and powerful portals tailored to your study needs."
+    description: "We build responsive, user-friendly websites and powerful portals tailored to your study needs.",
+    image: ""
   },
   {
     title: "Design & Development of Applications",
-    description: "Custom applications designed and developed to streamline your study operations."
+    description: "Custom applications designed and developed to streamline your study operations.",
+    image: ""
   },
   {
     title: "Android Application Development",
-    description: "We create feature-rich and user-friendly Android applications for your study."
+    description: "We create feature-rich and user-friendly Android applications for your study.",
+    image: ""
   },
   {
     title: "Domain & Hosting Services",
-    description: "Get your perfect domain name and secure, reliable hosting solutions under one roof."
+    description: "Get your perfect domain name and secure, reliable hosting solutions under one roof.",
+    image: ""
   },
   {
     title: "Bulk SMS / Email Services",
-    description: "Reach your audience instantly with our reliable bulk SMS and email services."
+    description: "Reach your audience instantly with our reliable bulk SMS and email services.",
+    image: ""
   },
   {
     title: "Digital Marketing Services",
-    description: "Boost your online presence and grow your study with our result-driven digital marketing strategies."
+    description: "Boost your online presence and grow your study with our result-driven digital marketing strategies.",
+    image: ""
   },
   {
     title: "Banners and Logo Design",
-    description: "Creative and professional designs that make your brand stand out from the crowd."
+    description: "Creative and professional designs that make your brand stand out from the crowd.",
+    image: ""
   },
   {
     title: "Thesis & Report Writing",
-    description: "Well-researched theses and reports prepared with accuracy and professionalism."
+    description: "Well-researched theses and reports prepared with accuracy and professionalism.",
+    image: ""
   },
   {
     title: "Printing and Bindings",
-    description: "High-quality printing and binding services for all your academic and study needs."
+    description: "High-quality printing and binding services for all your academic and study needs.",
+    image: ""
   },
   {
     title: "Research Services",
-    description: "In-depth research and data analysis to support your projects and business decisions."
+    description: "In-depth research and data analysis to support your projects and business decisions.",
+    image: ""
   },
   {
     title: "Training and Placement Center",
-    description: "We provide training and placement assistance to help you build a better career."
+    description: "We provide training and placement assistance to help you build a better career.",
+    image: ""
   },
   {
     title: "Design Company Profile",
-    description: "Professional company profile design to showcase your study identity."
+    description: "Professional company profile design to showcase your study identity.",
+    image: ""
   }
 ];
 
 const ServicesPage = () => {
+  const [activeServices, setActiveServices] = useState(staticServices);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const res = await databases.listDocuments(DB_ID, SERVICES_COLLECTION_ID, [
+          Query.orderAsc("order"),
+          Query.limit(100)
+        ]);
+        if (res.documents.length > 0) {
+          const mapped = res.documents.map((doc: any) => ({
+            title: doc.title,
+            description: doc.subtitle || doc.description || "",
+            image: doc.image || doc.imageUrl || ""
+          }));
+          setActiveServices(mapped);
+        }
+      } catch (err) {
+        console.warn("Appwrite services fetch failed, using local fallback:", err);
+      }
+    };
+    fetchServices();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <Header />
@@ -79,23 +117,38 @@ const ServicesPage = () => {
 
           {/* Services Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
-            {services.map((service, index) => (
+            {activeServices.map((service, index) => (
               <div 
                 key={index}
-                className="bg-white/70 backdrop-blur-md border border-white/80 p-8 rounded-[32px] flex flex-col h-full hover:shadow-2xl hover:shadow-teal-100/50 hover:-translate-y-2 transition-all duration-500 group"
+                className="bg-white/70 backdrop-blur-md border border-white/80 rounded-[32px] overflow-hidden flex flex-col h-full hover:shadow-2xl hover:shadow-teal-100/50 hover:-translate-y-2 transition-all duration-500 group"
               >
-                <div className="flex-grow space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900 leading-tight group-hover:text-[#14B8A6] transition-colors">
-                    {service.title}
-                  </h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">
-                    {service.description}
-                  </p>
+                {/* Top Image / Placeholder Section */}
+                <div className="relative w-full h-[160px] overflow-hidden bg-slate-100 border-b border-slate-100">
+                  {service.image ? (
+                    <img 
+                      src={service.image} 
+                      alt={service.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-200/60 relative flex items-center justify-center">
+                      <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                      <svg className="w-12 h-12 text-[#14B8A6]/40 group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21L14.907 18M21.94 9.486a10.016 10.016 0 00-6.425-6.425M21.94 9.486a10.014 10.014 0 01-6.425 6.425M21.94 9.486L14.907 18M15.515 3.061a10.016 10.016 0 00-6.425 6.425m6.425-6.425L9 21M9.09 9.486a10.014 10.014 0 006.425 6.425m-6.425-6.425L9 21" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-                <div className="mt-8">
-                  <button className="text-[#14B8A6] text-sm font-bold flex items-center gap-2 hover:gap-3 transition-all">
-                    Read more <ArrowRight size={16} weight="bold" />
-                  </button>
+
+                <div className="p-6 flex-grow flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-slate-900 leading-tight group-hover:text-[#14B8A6] transition-colors line-clamp-2">
+                      {service.title}
+                    </h3>
+                    <p className="text-slate-500 text-sm leading-relaxed line-clamp-3">
+                      {service.description}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}

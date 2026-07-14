@@ -16,25 +16,6 @@ import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
 import { databases, DB_ID, CONTACT_COLLECTION_ID, ID } from "@backend/services/appwrite";
 import { sendContactEmail } from "@backend/actions/email.actions";
-import { z } from "zod";
-import DOMPurify from "dompurify";
-import * as Sentry from "@sentry/nextjs";
-
-const clean = (val: string): string => DOMPurify.sanitize(val.trim());
-
-const contactSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email"),
-  phone: z
-    .string()
-    .refine(
-      (val) => val === "" || /^[0-9]{10}$/.test(val),
-      "Enter valid 10-digit number"
-    )
-    .optional(),
-  subject: z.string().min(1, "Subject is required"),
-  message: z.string().min(10, "Min 10 characters"),
-});
 
 interface ContactFormData {
   name: string;
@@ -68,21 +49,27 @@ const ContactPage = () => {
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-    const result = contactSchema.safeParse({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      subject: formData.subject,
-      message: formData.message,
-    });
-    if (!result.success) {
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FormErrors;
-        if (field && !newErrors[field]) {
-          newErrors[field] = issue.message;
-        }
-      }
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required.";
     }
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email.";
+    }
+    if (formData.phone.trim() && !/^[0-9+\-\s]{7,15}$/.test(formData.phone.trim())) {
+      newErrors.phone = "Please enter a valid phone number.";
+    }
+    if (!formData.subject.trim()) {
+      newErrors.subject = "Subject is required.";
+    }
+    if (!formData.message.trim()) {
+      newErrors.message = "Message is required.";
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = "Message must be at least 10 characters.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -106,39 +93,28 @@ const ContactPage = () => {
     setErrorMessage("");
 
     try {
-      const cleanName = clean(formData.name);
-      const cleanEmail = clean(formData.email);
-      const cleanPhone = clean(formData.phone);
-      const cleanSubject = clean(formData.subject);
-      const cleanMessage = clean(formData.message);
-
       await databases.createDocument(DB_ID, CONTACT_COLLECTION_ID, ID.unique(), {
-        name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone || "",
-        subject: cleanSubject,
-        message: cleanMessage,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || "",
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
       });
 
       // Send Email Notification
       await sendContactEmail({
-        name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone || "",
-        subject: cleanSubject,
-        message: cleanMessage,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || "",
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
       });
 
       setSubmitStatus("success");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (err: unknown) {
-      Sentry.captureException(err);
-      const raw = err instanceof Error ? err.message : "";
-      if (raw.toLowerCase().includes("network") || raw.toLowerCase().includes("fetch")) {
-        setErrorMessage("Connection failed. Please check your internet.");
-      } else {
-        setErrorMessage("Something went wrong. Please try again.");
-      }
+      const message = err instanceof Error ? err.message : "Unknown error occurred.";
+      setErrorMessage(`Failed to send: ${message}`);
       setSubmitStatus("error");
     }
   };
@@ -197,8 +173,8 @@ const ContactPage = () => {
                   <div>
                     <h3 className="font-bold text-slate-900">Address</h3>
                     <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                      SDB - 82, Ward 2A, 1st Floor,<br />
-                      Above Yuva Collection,<br />
+                      1st Floor, Near SDB 73,<br />
+                      Santoshi Cross Road, Ward 2A,<br />
                       Adipur, Gandhidham, Gujarat 370205
                     </p>
                   </div>
@@ -351,9 +327,9 @@ const ContactPage = () => {
 
           {/* Map Section */}
           <div className="mb-24 relative group">
-            <div className="overflow-hidden rounded-[40px] shadow-2xl shadow-slate-200 border-8 border-white transition-transform duration-500 group-hover:scale-[1.01]">
+            <div className="relative overflow-hidden rounded-[40px] shadow-2xl shadow-slate-200 border-8 border-white transition-transform duration-500 group-hover:scale-[1.01]">
               <iframe
-                src="https://www.google.com/maps?q=SDB+-+82,+Ward+2A,1st+Floor,+Above+Yuva+Collection,+Adipur,Gandhidham,+Gujarat+370205&output=embed"
+                src="https://maps.google.com/maps?q=1st+floor+near+SDB+73+Santoshi+Cross+Road+Ward+2A+Adipur+Gandhidham+Gujarat+370205&z=17&output=embed"
                 width="100%"
                 height="450"
                 style={{ border: 0 }}
@@ -363,17 +339,44 @@ const ContactPage = () => {
                 className="grayscale-[0.1] hover:grayscale-0 transition-all duration-700"
               ></iframe>
 
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                <div className="flex flex-col items-center">
-                  <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-2xl border border-slate-100 flex items-center gap-2 mb-2">
-                    <span className="font-bold text-slate-900 whitespace-nowrap text-xs">Evansh Classes</span>
-                  </div>
-                  <div className="relative">
-                    <MapPin size={48} weight="fill" className="text-red-500 drop-shadow-lg" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-2.5 h-2.5 bg-white rounded-full"></div>
-                  </div>
-                </div>
+              {/* Static pin — tip points to geographic centre of embed (offset for Maps header ~50px) */}
+              <div
+                className="absolute -translate-x-1/2 -translate-y-full pointer-events-none select-none"
+                style={{
+                  left: "50%",
+                  top: "calc(50% + 26px)",
+                  animation: "pin-drop 0.6s cubic-bezier(0.34,1.56,0.64,1) both",
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 40 56"
+                  className="w-10 h-14 drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]"
+                  aria-label="Evansh Services location"
+                >
+                  {/* Pin body */}
+                  <path
+                    d="M20 2C11.163 2 4 9.163 4 18c0 11.25 14 34 16 34s16-22.75 16-34C36 9.163 28.837 2 20 2z"
+                    fill="#EA4335"
+                  />
+                  {/* Gloss sheen */}
+                  <ellipse cx="15" cy="13" rx="5" ry="4" fill="rgba(255,255,255,0.25)" />
+                  {/* White inner circle */}
+                  <circle cx="20" cy="18" r="6" fill="#fff" />
+                  {/* Red dot in centre */}
+                  <circle cx="20" cy="18" r="3" fill="#EA4335" />
+                </svg>
+                {/* Shadow beneath pin tip */}
+                <div className="w-3 h-1 mx-auto rounded-full bg-black/20 blur-[2px] -mt-1" />
               </div>
+
+              <style>{`
+                @keyframes pin-drop {
+                  0%   { transform: translate(-50%, calc(-100% - 30px)); opacity: 0; }
+                  60%  { opacity: 1; }
+                  100% { transform: translate(-50%, -100%); opacity: 1; }
+                }
+              `}</style>
             </div>
           </div>
 

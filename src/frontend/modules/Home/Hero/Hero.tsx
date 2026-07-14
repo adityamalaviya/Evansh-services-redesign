@@ -14,7 +14,7 @@ const Hero: React.FC = () => {
           {/* Left Content */}
           <div className="max-w-xl text-center lg:text-left">
             <h1 className="text-5xl md:text-8xl font-black leading-[1.1] text-slate-900 tracking-tight mb-6 md:mb-8">
-              Learn today,<br />
+              Learn today<br />
               <span className="text-[#14B8A6]">Build tomorrow</span>
             </h1>
             <p className="text-base md:text-lg text-slate-500 mb-8 md:mb-12 leading-relaxed max-w-md mx-auto lg:mx-0 font-medium">

@@ -12,9 +12,8 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
-import * as Sentry from "@sentry/nextjs";
 
-const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing"];
+const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "3D Printing"];
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -24,63 +23,31 @@ export default function NewProjectPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(initialCategory);
-  const [order, setOrder] = useState<number>(0);
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    setImageError(null);
     if (file) {
-      // 1. FILE TYPE VALIDATION
-      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        setImageError('Only JPG, PNG and WebP images are allowed.');
+      if (file.size > 2 * 1024 * 1024) {
+        setError("Image size should be less than 2MB");
         return;
       }
-
-      // 2. FILE SIZE VALIDATION
-      const MAX_SIZE = 2 * 1024 * 1024; // 2MB
-      if (file.size > MAX_SIZE) {
-        setImageError('File size must be under 2MB.');
-        return;
-      }
-
-      // 3. FILE EXTENSION DOUBLE CHECK
-      const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
-      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        setImageError('Invalid file extension.');
-        return;
-      }
-
-      // 4. SANITIZE FILENAME before sending to Hono (Appwrite):
-      const safeName = file.name
-        .replace(/[^a-zA-Z0-9.\-_]/g, '_')
-        .toLowerCase();
-
-      const sanitizedFile = new File([file], safeName, { type: file.type });
-
-      setImageFile(sanitizedFile);
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
-      reader.readAsDataURL(sanitizedFile);
+      reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (imageError) return;
-    if (!imageFile) {
-      setImageError("Please upload a project thumbnail.");
-      return;
-    }
     setIsSubmitting(true);
     setError(null);
 
@@ -97,14 +64,18 @@ export default function NewProjectPage() {
         description,
         category,
         imageId,
-        order: Number(order),
+        order: Date.now(),
       });
 
-      router.push("/admin/projects");
+      if (category === "3D Printing") {
+        router.push("/admin/projects/3d-printing");
+      } else {
+        router.push("/admin/projects");
+      }
       router.refresh();
     } catch (err: any) {
-      Sentry.captureException(err);
-      setError("Something went wrong while saving the project. Please try again.");
+      console.error("Creation error:", err);
+      setError(err.message || "Something went wrong while saving the project.");
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +86,7 @@ export default function NewProjectPage() {
       {/* Breadcrumbs */}
       <div className="flex items-center gap-4">
         <Link
-          href="/admin/projects"
+          href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
           className="p-2.5 text-slate-500 hover:text-[#14B8A6] bg-white border border-slate-200 rounded-xl transition-all hover:border-teal-200"
         >
           <ArrowLeft size={18} weight="bold" />
@@ -152,29 +123,23 @@ export default function NewProjectPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
+              {category !== "3D Printing" && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Display Order</label>
-                <input
-                  type="number"
-                  value={order}
-                  onChange={(e) => setOrder(parseInt(e.target.value))}
-                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
-                />
-                <p className="text-[10px] text-slate-400 mt-1 pl-1 italic">Lower numbers appear first on the website.</p>
-              </div>
+                </>
+              )}
             </div>
 
             {/* Right: Image Upload */}
@@ -207,7 +172,6 @@ export default function NewProjectPage() {
                             e.preventDefault();
                             setImagePreview(null);
                             setImageFile(null);
-                            setImageError(null);
                           }}
                           className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors z-20 border border-slate-200"
                         >
@@ -225,9 +189,6 @@ export default function NewProjectPage() {
                     )}
                   </div>
                 </div>
-                {imageError && (
-                  <p className="text-red-500 text-xs pl-1 mt-1">{imageError}</p>
-                )}
               </div>
             </div>
           </div>
@@ -264,7 +225,7 @@ export default function NewProjectPage() {
               )}
             </button>
             <Link
-              href="/admin/projects"
+              href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
               className="w-full sm:w-auto text-slate-400 hover:text-slate-600 font-bold px-8 py-4 transition-colors text-center"
             >
               Cancel

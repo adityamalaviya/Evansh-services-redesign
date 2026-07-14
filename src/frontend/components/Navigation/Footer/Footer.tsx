@@ -86,18 +86,6 @@ const Footer: React.FC = () => {
 						</div>
 					</AnimatedContainer>
 
-					{/* Explore Column */}
-					<AnimatedContainer delay={0.1} className="text-center md:text-left">
-						<h3 className="text-teal-400 font-bold text-xs mb-5 uppercase tracking-[0.2em]">Explore</h3>
-						<ul className="space-y-4">
-							<li><Link href="/" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Home</Link></li>
-							<li><Link href="/about" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">About Us</Link></li>
-							<li><Link href="/works" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Our Work</Link></li>
-							<li><Link href="/services" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Services</Link></li>
-							<li><Link href="/contact" className="text-slate-400 text-sm font-medium hover:text-teal-400 transition-colors">Contact</Link></li>
-						</ul>
-					</AnimatedContainer>
-
 					{/* Contact Us Column */}
 					<AnimatedContainer delay={0.2} className="text-center md:text-left">
 						<h3 className="text-teal-400 font-bold text-xs mb-5 uppercase tracking-[0.2em]">Contact Us</h3>
@@ -115,6 +103,22 @@ const Footer: React.FC = () => {
 								</a>
 							</li>
 						</ul>
+					</AnimatedContainer>
+
+					{/* Address Column */}
+					<AnimatedContainer delay={0.3} className="text-center md:text-left">
+						<h3 className="text-teal-400 font-bold text-xs mb-5 uppercase tracking-[0.2em]">Address</h3>
+						<a
+							href="https://maps.google.com/?q=SDB-82,+Ward+2A,+1st+Floor,+Above+Yuva+Collection,+Adipur,+Gandhidham,+Gujarat+370205"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-slate-300 text-sm font-medium hover:text-teal-400 transition-colors duration-200 leading-relaxed block"
+						>
+							SDB - 82, Ward 2A, 1st Floor,<br />
+							Above Yuva Collection,<br />
+							Adipur, Gandhidham,<br />
+							Gujarat 370205
+						</a>
 					</AnimatedContainer>
 
 				</div>

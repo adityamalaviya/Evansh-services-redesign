@@ -1,8 +1,6 @@
-import '@/lib/env';
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@backend/contexts/AuthContext";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -11,7 +9,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Evansh Services - learn today, build tomorrow",
+  title: "Evansh Services - learn today build tomorrow",
   description: "Expert IT Training, Practical Knowledge and Understanding.",
 };
 
@@ -24,7 +22,7 @@ export default function RootLayout({
     <html lang="en" className={`h-full scroll-smooth antialiased ${plusJakartaSans.variable}`}>
       <body className={`${plusJakartaSans.className} min-h-full bg-[#F8FAFC] text-[#1E293B] overflow-x-hidden antialiased`}>
         <AuthProvider>
-          <QueryProvider>{children}</QueryProvider>
+          {children}
         </AuthProvider>
       </body>
     </html>

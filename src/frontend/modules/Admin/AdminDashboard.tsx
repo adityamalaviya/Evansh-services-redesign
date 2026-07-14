@@ -82,7 +82,6 @@ export default function AdminDashboard() {
 
   const quickActions = [
     { label: "Add New Project", href: "/admin/projects/new", icon: <Plus size={16} /> },
-    { label: "Add 3D Project", href: "/admin/projects/new?category=3D+Printing", icon: <Plus size={16} /> },
     { label: "View All Projects", href: "/admin/projects", icon: <ArrowRight size={16} /> },
   ];
 

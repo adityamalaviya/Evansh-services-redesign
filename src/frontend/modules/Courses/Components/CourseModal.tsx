@@ -4,16 +4,13 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@backend/contexts/AuthContext";
 import {
   ArrowLeft,
   ArrowRight,
-  CheckCircle,
-  Code,
-  RocketLaunch,
-  Briefcase
+  CheckCircle
 } from "@phosphor-icons/react";
 import EnrollmentModal from "./EnrollmentModal";
+import { useAuth } from "@backend/contexts/AuthContext";
 
 interface CourseModalProps {
   isOpen: boolean;
@@ -28,15 +25,16 @@ interface CourseModalProps {
 const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) => {
   const [mounted, setMounted] = useState(false);
   const [isEnrollmentOpen, setIsEnrollmentOpen] = useState(false);
+  const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
 
   const handleStartLearning = () => {
-    if (isLoggedIn) {
-      setIsEnrollmentOpen(true);
-    } else {
+    if (!isLoading && !isLoggedIn) {
+      // Redirect to login with a return path so we can auto-open the course modal after login
       const courseName = course?.title ?? "";
       router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
+    } else {
+      setIsEnrollmentOpen(true);
     }
   };
 
@@ -100,7 +98,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
                   </div>
                   <button 
                     onClick={handleStartLearning}
-                    disabled={false}
+                    disabled={isLoading}
                     className="flex items-center justify-center gap-3 text-white px-10 py-4 rounded-2xl font-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-teal-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ backgroundColor: course.color }}
                   >
@@ -138,33 +136,18 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
             </div>
 
             {/* Features Section - Middle Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 animate-in slide-in-from-bottom-5 duration-700 delay-200">
-              <div className="flex items-center gap-4 md:gap-6 p-4 md:p-0">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0" style={{ color: course.color }}>
-                     <Code size={28} weight="bold" />
-                  </div>
-                <div>
-                  <h3 className="text-sm md:text-lg font-black text-slate-900">Beginner Friendly</h3>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-400">Start from the basics.</p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+              <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                <h3 className="text-sm md:text-base font-black text-slate-900 mb-1">Beginner Friendly</h3>
+                <p className="text-[11px] md:text-xs font-medium text-slate-400">Start from the basics.</p>
               </div>
-              <div className="flex items-center gap-4 md:gap-6 p-4 md:p-0">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0" style={{ color: course.color }}>
-                  <RocketLaunch size={28} weight="bold" />
-                </div>
-                <div>
-                  <h3 className="text-sm md:text-lg font-black text-slate-900">Practical Learning</h3>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-400">Hands-on examples.</p>
-                </div>
+              <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                <h3 className="text-sm md:text-base font-black text-slate-900 mb-1">Practical Learning</h3>
+                <p className="text-[11px] md:text-xs font-medium text-slate-400">Hands-on examples.</p>
               </div>
-              <div className="flex items-center gap-4 md:gap-6 p-4 md:p-0">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0" style={{ color: course.color }}>
-                  <Briefcase size={28} weight="bold" />
-                </div>
-                <div>
-                  <h3 className="text-sm md:text-lg font-black text-slate-900">In-Demand Skills</h3>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-400">Boost your career.</p>
-                </div>
+              <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                <h3 className="text-sm md:text-base font-black text-slate-900 mb-1">In-Demand Skills</h3>
+                <p className="text-[11px] md:text-xs font-medium text-slate-400">Boost your career.</p>
               </div>
             </div>
 

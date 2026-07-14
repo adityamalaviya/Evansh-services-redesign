@@ -4,8 +4,11 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Globe, Laptop, Database, GraduationCap, Cube, Image as ImageIcon } from "@phosphor-icons/react";
+import { ArrowRight, Globe, Laptop, Database, GraduationCap, Cube, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
+import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
+import { Query } from "appwrite";
+import { useAuth } from "@backend/contexts/AuthContext";
 import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
 
 interface Project {
@@ -23,6 +26,7 @@ const categories = [
   { name: "Inventory Systems", icon: <Database size={18} /> },
   { name: "College Portals", icon: <GraduationCap size={18} /> },
   { name: "3D Printing", icon: <Cube size={18} /> },
+  { name: "Other Projects", icon: <DotsThreeOutline size={18} /> },
 ];
 
 const Works: React.FC = () => {
@@ -33,6 +37,7 @@ const Works: React.FC = () => {
   const [isEnrollmentOpen, setIsEnrollmentOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isLoggedIn, isLoading } = useAuth();
 
   // Auto-open project inquiry modal if redirected from login page with ?course=Start%20Your%20Journey param
   useEffect(() => {
@@ -48,20 +53,41 @@ const Works: React.FC = () => {
   }, [searchParams, router]);
 
   const handleStartJourneyClick = () => {
-    setIsEnrollmentOpen(true);
+    if (!isLoading && !isLoggedIn) {
+      router.push(`/login?redirect=/works&course=${encodeURIComponent("Start Your Journey")}`);
+    } else {
+      setIsEnrollmentOpen(true);
+    }
   };
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_HONO_API_URL}/projects`)
-      .then(r => r.json())
-      .then((data) => {
-        setDbProjects(data);
+    const fetchProjects = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, [
+          Query.orderAsc("order"),
+          Query.limit(100)
+        ]);
+        
+        const fetchedProjects = res.documents.map((doc: any) => ({
+          id: doc.$id,
+          title: doc.title,
+          category: doc.category,
+          description: doc.description,
+          image: doc.imageId ? storage.getFilePreview(BUCKET_ID, doc.imageId).toString() : ""
+        }));
+        
+        setDbProjects(fetchedProjects);
+      } catch (err: any) {
+        console.error("DB Fetch error:", err);
+        setError(`Failed to connect to database: ${err.message || 'Unknown error'}`);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => {
-        setDbProjects([]);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchProjects();
   }, []);
 
   const filteredProjects = activeCategory === "All Projects"
@@ -118,7 +144,7 @@ const Works: React.FC = () => {
              </div>
              <p className="text-slate-500 text-sm">
                Please verify that your <b>Database ID</b> in <code>.env.local</code> matches your Appwrite Console exactly. 
-               The current ID being used is from your environment config.
+               The current ID being used is <span className="font-mono bg-slate-100 px-1 rounded">{DB_ID}</span>.
              </p>
              <button 
                 onClick={() => window.location.reload()}
@@ -197,7 +223,7 @@ const Works: React.FC = () => {
             </div>
             <button
               onClick={handleStartJourneyClick}
-              disabled={false}
+              disabled={isLoading}
               className="bg-[#14B8A6] text-white px-10 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-[#0D9488] transition-all hover:scale-105 active:scale-95 shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Start Your Journey <ArrowRight size={20} weight="bold" />
