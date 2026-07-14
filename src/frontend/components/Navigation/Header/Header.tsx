@@ -25,7 +25,9 @@ const Header: React.FC = () => {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled ? "bg-white/90 backdrop-blur-lg shadow-sm h-16" : "bg-transparent h-20"
+      scrolled 
+        ? "bg-white/90 backdrop-blur-lg shadow-sm h-16" 
+        : "bg-white lg:bg-transparent border-b border-slate-100 lg:border-none h-16 lg:h-20"
     }`}>
       <div className={`${tokens.spacing.container} flex items-center justify-between h-full`}>
         {/* Logo Section */}
@@ -123,9 +125,7 @@ const Header: React.FC = () => {
       </div>
 
       {/* Mobile Menu Drawer */}
-      <div className={`lg:hidden absolute left-0 right-0 bg-white border-b border-slate-100 shadow-2xl transition-all duration-500 overflow-hidden ${
-        scrolled ? "top-16" : "top-20"
-      } ${
+      <div className={`lg:hidden absolute left-0 right-0 bg-white border-b border-slate-100 shadow-2xl transition-all duration-500 overflow-hidden top-16 ${
         isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
       }`}>
         <nav className="flex flex-col p-6 gap-2">

@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { databases, DB_ID, PROJECTS_COLLECTION_ID } from "@backend/services/appwrite";
-import { Query } from "appwrite";
+import { api } from "@/lib/api";
+import { useAuth } from "@backend/contexts/AuthContext";
 import {
   Images,
   Cube,
@@ -20,26 +20,30 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
   const [stats, setStats] = useState<Stats>({ totalProjects: 0, threeDProjects: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Wait until auth is resolved and user is confirmed logged-in
+    // to avoid firing admin API calls as a guest (which causes 401 errors)
+    if (isAuthLoading || !isLoggedIn) return;
+
     const fetchStats = async () => {
       try {
-        const all = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, [Query.limit(1)]);
-        const threeD = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, [
-          Query.equal("category", "3D Printing"),
-          Query.limit(1),
-        ]);
-        setStats({ totalProjects: all.total, threeDProjects: threeD.total });
+        const res = await api.getAdminStats();
+        setStats({
+          totalProjects: res.totalProjects || 0,
+          threeDProjects: res.threeDProjects || 0,
+        });
       } catch {
-        // DB may not be set up yet
+        // BFF may be down or unauthenticated — dashboard still renders with zeros
       } finally {
         setIsLoading(false);
       }
     };
     fetchStats();
-  }, []);
+  }, [isAuthLoading, isLoggedIn]);
 
   const statCards = [
     {
@@ -82,7 +86,6 @@ export default function AdminDashboard() {
 
   const quickActions = [
     { label: "Add New Project", href: "/admin/projects/new", icon: <Plus size={16} /> },
-    { label: "Add 3D Project", href: "/admin/projects/new?category=3D+Printing", icon: <Plus size={16} /> },
     { label: "View All Projects", href: "/admin/projects", icon: <ArrowRight size={16} /> },
   ];
 
@@ -142,15 +145,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Info Banner */}
-      <div className="bg-teal-50 border border-teal-100 rounded-2xl p-6">
-        <h3 className="text-[#14B8A6] font-bold mb-2">📋 Getting Started</h3>
-        <p className="text-slate-500 text-sm leading-relaxed">
-          Make sure your <span className="text-[#1E1E24] font-semibold">Appwrite Database</span> is set up with the collection ID matching{" "}
-          <code className="bg-white border border-slate-200 text-[#14B8A6] px-2 py-0.5 rounded text-xs">NEXT_PUBLIC_APPWRITE_PROJECTS_COLLECTION_ID</code>.
-          Projects added here will appear live on your website.
-        </p>
-      </div>
+
     </div>
   );
 }

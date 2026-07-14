@@ -1,5 +1,5 @@
-import CoursesAdminPage from "@frontend/modules/Admin/Courses/CoursesAdminPage";
+import AdminCoursesPage from "@frontend/modules/Admin/Courses/AdminCoursesPage";
 
 export default function Page() {
-  return <CoursesAdminPage />;
+  return <AdminCoursesPage />;
 }

@@ -12,7 +12,6 @@ import {
   X,
   GraduationCap,
   Briefcase,
-  Cube,
 } from "@phosphor-icons/react";
 import { useAuth } from "@backend/contexts/AuthContext";
 import { isAdmin } from "@backend/guards/adminGuard";
@@ -21,7 +20,6 @@ import { ConfirmModal } from "@frontend/components";
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: <SquaresFour size={20} weight="duotone" /> },
   { label: "All Projects", href: "/admin/projects", icon: <Images size={20} weight="duotone" /> },
-  { label: "3D Printing", href: "/admin/projects/3d-printing", icon: <Cube size={20} weight="duotone" /> },
   { label: "Courses", href: "/admin/courses", icon: <GraduationCap size={20} weight="duotone" /> },
   { label: "Services", href: "/admin/services", icon: <Briefcase size={20} weight="duotone" /> },
 ];
@@ -75,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-30 flex flex-col transition-transform duration-300 shadow-sm
+        className={`fixed top-0 left-0 h-screen w-64 bg-white border-r border-slate-200 z-30 flex flex-col transition-transform duration-300 shadow-sm
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:z-auto`}
       >
         {/* Logo */}

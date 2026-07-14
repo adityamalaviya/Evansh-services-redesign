@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
+import { api } from "@/lib/api";
 import {
   ArrowLeft,
   UploadSimple,
@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
-const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing", "Other Projects"];
+const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "3D Printing"];
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function NewProjectPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(initialCategory);
-  const [order, setOrder] = useState<number>(0);
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -52,22 +52,21 @@ export default function NewProjectPage() {
     setError(null);
 
     try {
-      let imageId = "";
-
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
       if (imageFile) {
-        const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
-        imageId = uploadedFile.$id;
+        formData.append("image", imageFile);
       }
 
-      await databases.createDocument(DB_ID, PROJECTS_COLLECTION_ID, ID.unique(), {
-        title,
-        description,
-        category,
-        imageId,
-        order: Number(order),
-      });
+      await api.adminCreateProject(formData);
 
-      router.push("/admin/projects");
+      if (category === "3D Printing") {
+        router.push("/admin/projects/3d-printing");
+      } else {
+        router.push("/admin/projects");
+      }
       router.refresh();
     } catch (err: any) {
       console.error("Creation error:", err);
@@ -82,7 +81,7 @@ export default function NewProjectPage() {
       {/* Breadcrumbs */}
       <div className="flex items-center gap-4">
         <Link
-          href="/admin/projects"
+          href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
           className="p-2.5 text-slate-500 hover:text-[#14B8A6] bg-white border border-slate-200 rounded-xl transition-all hover:border-teal-200"
         >
           <ArrowLeft size={18} weight="bold" />
@@ -119,29 +118,23 @@ export default function NewProjectPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
+              {category !== "3D Printing" && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Display Order</label>
-                <input
-                  type="number"
-                  value={order}
-                  onChange={(e) => setOrder(parseInt(e.target.value))}
-                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
-                />
-                <p className="text-[10px] text-slate-400 mt-1 pl-1 italic">Lower numbers appear first on the website.</p>
-              </div>
+                </>
+              )}
             </div>
 
             {/* Right: Image Upload */}
@@ -227,7 +220,7 @@ export default function NewProjectPage() {
               )}
             </button>
             <Link
-              href="/admin/projects"
+              href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
               className="w-full sm:w-auto text-slate-400 hover:text-slate-600 font-bold px-8 py-4 transition-colors text-center"
             >
               Cancel

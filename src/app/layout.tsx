@@ -9,7 +9,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Evansh Services - learn today, build tomorrow",
+  title: "Evansh Services - learn today build tomorrow",
   description: "Expert IT Training, Practical Knowledge and Understanding.",
 };
 

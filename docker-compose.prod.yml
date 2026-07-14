@@ -1,0 +1,21 @@
+version: "3.9"
+
+# Production overrides — extend with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+services:
+  bff:
+    restart: always
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  pipeline:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M

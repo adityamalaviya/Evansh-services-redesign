@@ -7,22 +7,48 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
-  CheckCircle,
-  Code,
-  RocketLaunch,
-  Briefcase
+  CheckCircle
 } from "@phosphor-icons/react";
 import EnrollmentModal from "./EnrollmentModal";
 import { useAuth } from "@backend/contexts/AuthContext";
 
+export interface CourseModalData {
+  title: string;
+  description: string;
+  color: string;
+  // Fields from DB — used in modal instead of hardcoded values
+  subtitle?: string;
+  aboutCourse?: string;
+  price?: number;
+  heroImageUrl?: string;
+  feature1Title?: string;
+  feature1Subtitle?: string;
+  feature2Title?: string;
+  feature2Subtitle?: string;
+  feature3Title?: string;
+  feature3Subtitle?: string;
+  whatYouWillLearn?: string;
+}
+
 interface CourseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  course: {
-    title: string;
-    description: string;
-    color: string;
-  } | null;
+  course: CourseModalData | null;
+}
+
+/** whatYouWillLearn is stored as newline-separated by the admin form */
+function parseWhatYouWillLearn(raw?: string): string[] {
+  if (!raw) return [];
+  // Try JSON array first
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+  } catch { /* not JSON */ }
+  // Newline-separated
+  const lines = raw.split("\n").map((s) => s.trim()).filter(Boolean);
+  if (lines.length > 1) return lines;
+  // Comma-separated fallback
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) => {
@@ -33,7 +59,6 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
 
   const handleStartLearning = () => {
     if (!isLoading && !isLoggedIn) {
-      // Redirect to login with a return path so we can auto-open the course modal after login
       const courseName = course?.title ?? "";
       router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
     } else {
@@ -54,6 +79,33 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
   }, [isOpen]);
 
   if (!mounted || !isOpen || !course) return null;
+
+  // ── Derived values — DB data with sensible fallbacks ─────────────────────
+  const subtitle = course.subtitle || `Learn ${course.title} Programming\nfrom Basics to Advanced`;
+  const shortDescription = course.description;
+  const aboutCourse = course.aboutCourse || `This course is designed for anyone who wants to learn ${course.title} programming from scratch or take their skills to the next level.`;
+  const priceDisplay = course.price != null ? `₹${course.price.toLocaleString("en-IN")}` : "₹3500";
+
+  const features = [
+    { title: course.feature1Title, subtitle: course.feature1Subtitle },
+    { title: course.feature2Title, subtitle: course.feature2Subtitle },
+    { title: course.feature3Title, subtitle: course.feature3Subtitle },
+  ].filter((f) => f.title);
+
+  // Fall back to generic features if none defined in DB
+  const displayFeatures = features.length > 0 ? features : [
+    { title: "Beginner Friendly", subtitle: "Start from the basics." },
+    { title: "Practical Learning", subtitle: "Hands-on examples." },
+    { title: "In-Demand Skills",  subtitle: "Boost your career." },
+  ];
+
+  const whatYouWillLearn = parseWhatYouWillLearn(course.whatYouWillLearn);
+  const displayLearnPoints = whatYouWillLearn.length > 0 ? whatYouWillLearn : [
+    "Understand syntax and fundamentals",
+    "Work with real-world examples",
+    "Complete mini-projects",
+    "Get a certificate",
+  ];
 
   const modalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 md:p-6 lg:p-12">
@@ -87,19 +139,24 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
               <div className="space-y-6 md:space-y-8 animate-in slide-in-from-left-5 duration-700">
                 <div>
                   <h1 className="text-4xl md:text-7xl font-black text-slate-900 mb-4">{course.title}</h1>
+                  {/* ✅ Dynamic subtitle from DB */}
                   <h2 className="text-xl md:text-2xl font-bold mb-6 md:mb-8 leading-tight" style={{ color: course.color }}>
-                    Learn {course.title} Programming<br />from Basics to Advanced
+                    {subtitle.split("\n").map((line, i) => (
+                      <span key={i}>{line}{i < subtitle.split("\n").length - 1 && <br />}</span>
+                    ))}
                   </h2>
+                  {/* ✅ Dynamic short description from DB */}
                   <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8 md:mb-10">
-                    {course.title} is a powerful, versatile, and beginner-friendly programming language.
+                    {shortDescription}
                   </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                  {/* ✅ Dynamic price from DB */}
                   <div className="bg-white px-8 py-4 rounded-2xl shadow-sm flex items-center justify-center border border-slate-100">
-                    <span className="text-3xl font-black text-slate-900">₹3500</span>
+                    <span className="text-3xl font-black text-slate-900">{priceDisplay}</span>
                   </div>
-                  <button 
+                  <button
                     onClick={handleStartLearning}
                     disabled={isLoading}
                     className="flex items-center justify-center gap-3 text-white px-10 py-4 rounded-2xl font-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-teal-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -112,82 +169,70 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
 
               {/* Right Illustration Side - Hidden on small mobile or simplified */}
               <div className="relative h-[300px] md:h-[450px] hidden sm:block animate-in slide-in-from-right-5 duration-700">
-                {/* Floating Code Window (Simplified for tablet) */}
-                <div className="absolute top-0 left-0 w-[200px] md:w-[240px] bg-slate-900 p-4 md:p-6 rounded-3xl shadow-2xl z-20 border border-slate-700/50">
-                  <div className="flex gap-1.5 mb-4 md:mb-6">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                {course.heroImageUrl ? (
+                  /* ✅ Dynamic hero image from DB */
+                  <div className="absolute inset-0 rounded-[32px] md:rounded-[40px] overflow-hidden shadow-2xl">
+                    {/* Use plain img — heroImageUrl can be any external domain */}
+                    <img
+                      src={course.heroImageUrl}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                  <div className="space-y-2 md:space-y-4 font-mono text-[8px] md:text-[10px]">
-                    <div className="flex gap-2"><span className="text-teal-400">print</span><span className="text-slate-100">(&quot;Hello!&quot;)</span></div>
-                    <div className="flex gap-2"><span className="text-teal-400">name</span><span className="text-slate-100">= &quot;{course.title}&quot;</span></div>
-                  </div>
-                </div>
-
-                {/* Main Image with Laptop */}
-                <div className="absolute bottom-0 right-0 w-[300px] md:w-[450px] z-10">
-                  <Image
-                    src="/assets/Main.jpeg"
-                    alt="Student workspace"
-                    width={450}
-                    height={340}
-                    className="rounded-[32px] md:rounded-[40px] shadow-2xl"
-                  />
-                </div>
+                ) : (
+                  <>
+                    {/* Floating Code Window (original fallback) */}
+                    <div className="absolute top-0 left-0 w-[200px] md:w-[240px] bg-slate-900 p-4 md:p-6 rounded-3xl shadow-2xl z-20 border border-slate-700/50">
+                      <div className="flex gap-1.5 mb-4 md:mb-6">
+                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      </div>
+                      <div className="space-y-2 md:space-y-4 font-mono text-[8px] md:text-[10px]">
+                        <div className="flex gap-2"><span className="text-teal-400">print</span><span className="text-slate-100">(&quot;Hello!&quot;)</span></div>
+                        <div className="flex gap-2"><span className="text-teal-400">name</span><span className="text-slate-100">= &quot;{course.title}&quot;</span></div>
+                      </div>
+                    </div>
+                    {/* Main Image with Laptop */}
+                    <div className="absolute bottom-0 right-0 w-[300px] md:w-[450px] z-10">
+                      <Image
+                        src="/assets/Main.jpeg"
+                        alt="Student workspace"
+                        width={450}
+                        height={340}
+                        className="rounded-[32px] md:rounded-[40px] shadow-2xl"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Features Section - Middle Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 animate-in slide-in-from-bottom-5 duration-700 delay-200">
-              <div className="flex items-center gap-4 md:gap-6 p-4 md:p-0">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0" style={{ color: course.color }}>
-                     <Code size={28} weight="bold" />
-                  </div>
-                <div>
-                  <h3 className="text-sm md:text-lg font-black text-slate-900">Beginner Friendly</h3>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-400">Start from the basics.</p>
+            {/* ✅ Features Section — dynamic from DB, fallback to originals */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+              {displayFeatures.map((f, i) => (
+                <div key={i} className="bg-white border border-slate-100 rounded-2xl p-5">
+                  <h3 className="text-sm md:text-base font-black text-slate-900 mb-1">{f.title}</h3>
+                  {f.subtitle && <p className="text-[11px] md:text-xs font-medium text-slate-400">{f.subtitle}</p>}
                 </div>
-              </div>
-              <div className="flex items-center gap-4 md:gap-6 p-4 md:p-0">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0" style={{ color: course.color }}>
-                  <RocketLaunch size={28} weight="bold" />
-                </div>
-                <div>
-                  <h3 className="text-sm md:text-lg font-black text-slate-900">Practical Learning</h3>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-400">Hands-on examples.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 md:gap-6 p-4 md:p-0">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center shadow-md flex-shrink-0" style={{ color: course.color }}>
-                  <Briefcase size={28} weight="bold" />
-                </div>
-                <div>
-                  <h3 className="text-sm md:text-lg font-black text-slate-900">In-Demand Skills</h3>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-400">Boost your career.</p>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Bottom Content Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 pt-8 border-t border-slate-100 animate-in slide-in-from-bottom-5 duration-700 delay-300">
+              {/* ✅ About This Course — dynamic from DB */}
               <div>
                 <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-4 md:mb-6 flex flex-col gap-2">
                   About This Course
                   <div className="w-12 h-1 rounded-full" style={{ backgroundColor: course.color }}></div>
                 </h3>
                 <p className="text-slate-500 font-bold text-xs md:text-sm leading-relaxed">
-                  This course is designed for anyone who wants to learn {course.title} programming
-                  from scratch or take their skills to the next level.
+                  {aboutCourse}
                 </p>
               </div>
+              {/* ✅ What You'll Learn — dynamic from DB */}
               <div className="space-y-3 md:space-y-4">
-                {[
-                  "Understand syntax and fundamentals",
-                  "Work with real-world examples",
-                  "Complete mini-projects",
-                  "Get a certificate"
-                ].map((item, i) => (
+                {displayLearnPoints.map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle size={24} weight="fill" style={{ color: course.color }} />
                     <span className="text-slate-700 font-bold text-xs md:text-sm">

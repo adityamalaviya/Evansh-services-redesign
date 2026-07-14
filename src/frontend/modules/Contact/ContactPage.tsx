@@ -14,8 +14,8 @@ import {
 } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
-import { databases, DB_ID, CONTACT_COLLECTION_ID, ID } from "@backend/services/appwrite";
-import { sendContactEmail } from "@backend/actions/email.actions";
+import { api } from "@/lib/api";
+
 
 interface ContactFormData {
   name: string;
@@ -93,16 +93,7 @@ const ContactPage = () => {
     setErrorMessage("");
 
     try {
-      await databases.createDocument(DB_ID, CONTACT_COLLECTION_ID, ID.unique(), {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || "",
-        subject: formData.subject.trim(),
-        message: formData.message.trim(),
-      });
-
-      // Send Email Notification
-      await sendContactEmail({
+      await api.submitContact({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || "",
@@ -112,8 +103,8 @@ const ContactPage = () => {
 
       setSubmitStatus("success");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error occurred.";
+    } catch (err: any) {
+      const message = err?.message || "Unknown error occurred.";
       setErrorMessage(`Failed to send: ${message}`);
       setSubmitStatus("error");
     }

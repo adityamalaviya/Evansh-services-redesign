@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
+import { api } from "@/lib/api";
 import {
   ArrowLeft,
   UploadSimple,
@@ -35,16 +35,15 @@ export default function EditProjectPage() {
 
   const fetchProject = useCallback(async () => {
     try {
-      const doc: any = await databases.getDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId);
+      const doc: any = await api.adminGetProject(projectId);
       setTitle(doc.title);
       setDescription(doc.description);
       setCategory(doc.category);
       setOrder(doc.order || 0);
       setCurrentImageId(doc.imageId || "");
 
-      if (doc.imageId) {
-        const preview: any = storage.getFilePreview(BUCKET_ID, doc.imageId);
-        setImagePreview(preview.toString());
+      if (doc.imageUrl) {
+        setImagePreview(doc.imageUrl);
       }
     } catch (err: any) {
       setError("Project not found or connection error.");
@@ -79,25 +78,21 @@ export default function EditProjectPage() {
     setError(null);
 
     try {
-      let finalImageId = currentImageId;
-
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
       if (imageFile) {
-        if (currentImageId) {
-          try { await storage.deleteFile(BUCKET_ID, currentImageId); } catch (e) {}
-        }
-        const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
-        finalImageId = uploadedFile.$id;
+        formData.append("image", imageFile);
       }
 
-      await databases.updateDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId, {
-        title,
-        description,
-        category,
-        imageId: finalImageId,
-        order: Number(order),
-      });
+      await api.adminUpdateProject(projectId, formData);
 
-      router.push("/admin/projects");
+      if (category === "3D Printing") {
+        router.push("/admin/projects/3d-printing");
+      } else {
+        router.push("/admin/projects");
+      }
       router.refresh();
     } catch (err: any) {
       setError(err.message || "Failed to update project.");
@@ -110,11 +105,14 @@ export default function EditProjectPage() {
     if (!confirm("Are you sure you want to delete this project permanently?")) return;
     setIsDeleting(true);
     try {
-      if (currentImageId) {
-        await storage.deleteFile(BUCKET_ID, currentImageId).catch(() => {});
+      // BFF handles storage file deletion server-side
+      await api.adminDeleteProject(projectId);
+      if (category === "3D Printing") {
+        router.push("/admin/projects/3d-printing");
+      } else {
+        router.push("/admin/projects");
       }
-      await databases.deleteDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId);
-      router.push("/admin/projects");
+      router.refresh();
     } catch (err) {
       setError("Failed to delete project.");
       setIsDeleting(false);
@@ -134,7 +132,7 @@ export default function EditProjectPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            href="/admin/projects"
+            href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
             className="p-2.5 text-slate-500 hover:text-[#14B8A6] bg-white border border-slate-200 rounded-xl transition-all hover:border-teal-200"
           >
             <ArrowLeft size={18} weight="bold" />
@@ -177,25 +175,29 @@ export default function EditProjectPage() {
                   className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
-                >
-                  {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Display Order</label>
-                <input
-                  type="number"
-                  value={order}
-                  onChange={(e) => setOrder(parseInt(e.target.value))}
-                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
-                />
-              </div>
+              {category !== "3D Printing" && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
+                    >
+                      {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Display Order</label>
+                    <input
+                      type="number"
+                      value={order}
+                      onChange={(e) => setOrder(parseInt(e.target.value))}
+                      className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-2">
