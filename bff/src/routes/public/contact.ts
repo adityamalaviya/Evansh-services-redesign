@@ -4,6 +4,7 @@ import { databases, DB_ID, COLLECTIONS, ID } from '../../lib/appwrite';
 import { contactLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
 import { logger } from '../../lib/logger';
+import { callPipeline } from '../../lib/fastapi';
 
 const router = Router();
 
@@ -31,6 +32,39 @@ router.post('/', contactLimiter, async (req: Request, res: Response, next: NextF
     }
 
     const { name, email, phone, subject, message } = parsed.data;
+
+    let pipelineResult: { valid: boolean; errors?: Record<string, string[]> };
+    try {
+      pipelineResult = await callPipeline<{ valid: boolean; errors?: Record<string, string[]> }>('/pipeline/validate/contact', {
+        body: {
+          name,
+          email,
+          phone,
+          subject,
+          message,
+        },
+        requestId: req.requestId,
+      });
+    } catch (err) {
+      logger.error({ requestId: req.requestId, err }, 'Contact pipeline validation failed');
+      res.status(502).json({
+        error: {
+          code: 'PIPELINE_UNAVAILABLE',
+          message: 'Contact validation service is unavailable. Please try again later.',
+        },
+      });
+      return;
+    }
+    if (!pipelineResult.valid) {
+      res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid form data.',
+          fields: pipelineResult.errors,
+        },
+      });
+      return;
+    }
 
     // Save to Appwrite (server-side — API key used, not client session)
     await databases.createDocument(DB_ID, COLLECTIONS.contactMessages, ID.unique(), {

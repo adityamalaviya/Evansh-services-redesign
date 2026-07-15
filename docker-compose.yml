@@ -14,7 +14,8 @@ services:
       - NODE_ENV=development
       - PIPELINE_URL=http://pipeline:8000
     depends_on:
-      - pipeline
+      pipeline:
+        condition: service_healthy
     networks:
       - internal
 
@@ -26,6 +27,12 @@ services:
     # No 'ports' → not accessible from host; BFF reaches it via Docker network
     env_file:
       - ./pipeline/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     networks:
       - internal
 
