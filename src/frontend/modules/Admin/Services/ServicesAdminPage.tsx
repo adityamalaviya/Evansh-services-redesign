@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
+import { api } from "@/lib/api";
 import { databases, DB_ID, SERVICES_COLLECTION_ID, ID } from "@backend/services/appwrite";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -36,6 +37,13 @@ export default function ServicesAdminPage() {
     setSuccess(false);
 
     try {
+      await api.adminCreateService({
+        title,
+        slug: title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        description: subtitle,
+        image,
+        display_order: 0,
+        active: true,
       await databases.createDocument(DB_ID, SERVICES_COLLECTION_ID, ID.unique(), {
         title,
         subtitle,
@@ -50,6 +58,7 @@ export default function ServicesAdminPage() {
       setImage("");
       setTimeout(() => router.push("/admin/services"), 1200);
     } catch (err: any) {
+      setError(err?.message || "Failed to save service. Please check your BFF connection.");
       setError(err?.message || "Failed to save service. Please check your Appwrite setup.");
     } finally {
       setIsSubmitting(false);
@@ -109,6 +118,7 @@ export default function ServicesAdminPage() {
             <input
               type="url"
               value={image}
+              onChange={(e) => setImage(e.target.value)}
               onChange={(e) => setImage(sanitizeImageUrl(e.target.value))}
               placeholder="https://... (image shown at top of the service card)"
               className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"

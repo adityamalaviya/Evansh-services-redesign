@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, Warning, ArrowLeft } from "@phosphor-icons/react";
+import { api } from "@/lib/api";
 import { databases, DB_ID, COURSES_COLLECTION_ID } from "@backend/services/appwrite";
 import Link from "next/link";
 
@@ -58,11 +59,16 @@ export default function EditCoursePage() {
 
   const fetchCourse = useCallback(async () => {
     try {
+      const doc: any = await api.adminGetCourse(courseId);
       const doc: any = await databases.getDocument(DB_ID, COURSES_COLLECTION_ID, courseId);
       setForm({
         title: doc.title || "",
         subtitle: doc.subtitle || "",
         shortDescription: doc.shortDescription || doc.description || "",
+        aboutDescription: doc.aboutCourse || doc.aboutDescription || "",
+        price: doc.price?.toString() || "0",
+        cardImage: doc.cardImageUrl || doc.cardImage || "",
+        heroImage: doc.heroImageUrl || doc.heroImage || "",
         aboutDescription: doc.aboutDescription || "",
         price: doc.price?.toString() || "0",
         cardImage: doc.cardImage || "",
@@ -73,6 +79,9 @@ export default function EditCoursePage() {
           { title: doc.feature2Title || "Practical Learning", subtitle: doc.feature2Subtitle || "Hands-on examples." },
           { title: doc.feature3Title || "In-Demand Skills", subtitle: doc.feature3Subtitle || "Boost your career." },
         ],
+        learnPoints: doc.whatYouWillLearn
+          ? doc.whatYouWillLearn.split("\n").filter(Boolean)
+          : (doc.learnPoints && doc.learnPoints.length > 0 ? doc.learnPoints : [""]),
         learnPoints: doc.learnPoints && doc.learnPoints.length > 0 ? doc.learnPoints : [""],
       });
     } catch (err) {
@@ -129,6 +138,15 @@ export default function EditCoursePage() {
     setError(null);
 
     try {
+      await api.adminUpdateCourse(courseId, {
+        title: form.title,
+        subtitle: form.subtitle,
+        shortDescription: form.shortDescription,
+        aboutCourse: form.aboutDescription,
+        price: parseInt(form.price) || 0,
+        slug: form.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        cardImageUrl: form.cardImage,
+        heroImageUrl: form.heroImage,
       await databases.updateDocument(DB_ID, COURSES_COLLECTION_ID, courseId, {
         title: form.title,
         subtitle: form.subtitle,
@@ -145,6 +163,7 @@ export default function EditCoursePage() {
         feature2Subtitle: form.features[1]?.subtitle || "",
         feature3Title: form.features[2]?.title || "",
         feature3Subtitle: form.features[2]?.subtitle || "",
+        whatYouWillLearn: form.learnPoints.filter((p) => p.trim() !== "").join("\n"),
         learnPoints: form.learnPoints.filter((p) => p.trim() !== ""),
       });
 

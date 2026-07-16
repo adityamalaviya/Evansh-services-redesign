@@ -6,18 +6,34 @@ import {
   ArrowRight
 } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
+import CourseModal, { CourseModalData } from "./CourseModal";
 import CourseModal from "./CourseModal";
 
+// ── Course interface — same as before + extra fields for modal ──────────────
 interface Course {
-  id: number;
+  id: number | string;
   title: string;
+  description: string;   // used on the card (shortDescription from DB)
   description: string;
   color: string;
   bgColor: string;
   borderColor: string;
   image?: string;
+  // extra fields for the modal only (not shown on card)
+  subtitle?: string;
+  aboutCourse?: string;
+  price?: number;
+  heroImageUrl?: string;
+  feature1Title?: string;
+  feature1Subtitle?: string;
+  feature2Title?: string;
+  feature2Subtitle?: string;
+  feature3Title?: string;
+  feature3Subtitle?: string;
+  whatYouWillLearn?: string;
 }
 
+// ── Static fallback (unchanged from original) ─────────────────────────────
 const courses: Course[] = [
   {
     id: 1,
@@ -79,6 +95,7 @@ interface CoursesProps {
   forceVisible?: boolean;
 }
 
+// ── Card component — identical to original ────────────────────────────────
 // Single card component
 const CourseCard: React.FC<{ course: Course; onClick: (course: Course) => void }> = ({ course, onClick }) => (
   <div
@@ -130,6 +147,7 @@ const CourseCard: React.FC<{ course: Course; onClick: (course: Course) => void }
   </div>
 );
 
+import { api } from "@/lib/api";
 import { databases, DB_ID, COURSES_COLLECTION_ID } from "@backend/services/appwrite";
 import { Query } from "appwrite";
 
@@ -146,6 +164,10 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
   useEffect(() => {
     const fetchCoursesFromAppwrite = async () => {
       try {
+        const res = await api.getCourses();
+        if (res.courses.length > 0) {
+          const mapped: Course[] = res.courses.map((doc: any) => ({
+            id: doc.id,
         const res = await databases.listDocuments(DB_ID, COURSES_COLLECTION_ID, [
           Query.orderAsc("order"),
           Query.limit(100)
@@ -158,11 +180,25 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
             color: doc.themeColor || "#14B8A6",
             bgColor: doc.bgColor || "bg-teal-50/50",
             borderColor: doc.borderColor || "border-teal-100",
+            image: doc.cardImageUrl || doc.image || "",
+            // extra modal-only fields
+            subtitle: doc.subtitle,
+            aboutCourse: doc.aboutCourse,
+            price: doc.price,
+            heroImageUrl: doc.heroImageUrl,
+            feature1Title: doc.feature1Title,
+            feature1Subtitle: doc.feature1Subtitle,
+            feature2Title: doc.feature2Title,
+            feature2Subtitle: doc.feature2Subtitle,
+            feature3Title: doc.feature3Title,
+            feature3Subtitle: doc.feature3Subtitle,
+            whatYouWillLearn: doc.whatYouWillLearn,
             image: doc.cardImage || doc.image || ""
           }));
           setActiveCourses(mapped);
         }
       } catch (err) {
+        console.warn("BFF courses fetch failed, using local fallback:", err);
         console.warn("Appwrite courses fetch failed, using local fallback:", err);
       }
     };
@@ -212,6 +248,26 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
 
   // Duplicate cards for seamless infinite loop
   const allCards = [...activeCourses, ...activeCourses, ...activeCourses];
+
+  // Build modal data from the selected course
+  const modalData: CourseModalData | null = selectedCourse
+    ? {
+        title: selectedCourse.title,
+        description: selectedCourse.description,
+        color: selectedCourse.color,
+        subtitle: selectedCourse.subtitle,
+        aboutCourse: selectedCourse.aboutCourse,
+        price: selectedCourse.price,
+        heroImageUrl: selectedCourse.heroImageUrl,
+        feature1Title: selectedCourse.feature1Title,
+        feature1Subtitle: selectedCourse.feature1Subtitle,
+        feature2Title: selectedCourse.feature2Title,
+        feature2Subtitle: selectedCourse.feature2Subtitle,
+        feature3Title: selectedCourse.feature3Title,
+        feature3Subtitle: selectedCourse.feature3Subtitle,
+        whatYouWillLearn: selectedCourse.whatYouWillLearn,
+      }
+    : null;
 
   return (
     <>
@@ -269,6 +325,7 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
       <CourseModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        course={modalData}
         course={
           selectedCourse
             ? {

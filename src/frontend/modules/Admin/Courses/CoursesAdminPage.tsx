@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, Warning, ArrowLeft } from "@phosphor-icons/react";
+import { api } from "@/lib/api";
 import { databases, DB_ID, COURSES_COLLECTION_ID, ID } from "@backend/services/appwrite";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -99,6 +100,16 @@ export default function CoursesAdminPage() {
     setSuccess(false);
 
     try {
+      await api.adminCreateCourse({
+        title: form.title,
+        subtitle: form.subtitle,
+        shortDescription: form.shortDescription,
+        aboutCourse: form.aboutDescription,
+        price: parseInt(form.price) || 0,
+        slug: form.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        cardImageUrl: form.cardImage,
+        heroImageUrl: form.heroImage,
+        themeColor: form.themeColor,
       await databases.createDocument(DB_ID, COURSES_COLLECTION_ID, ID.unique(), {
         title: form.title,
         subtitle: form.subtitle,
@@ -113,6 +124,8 @@ export default function CoursesAdminPage() {
         feature2Subtitle: form.features[1]?.subtitle || "",
         feature3Title: form.features[2]?.title || "",
         feature3Subtitle: form.features[2]?.subtitle || "",
+        whatYouWillLearn: form.learnPoints.filter((p) => p.trim() !== "").join("\n"),
+        isPublished: true,
         learnPoints: form.learnPoints.filter((p) => p.trim() !== ""),
         order: Date.now(),
       });
@@ -120,6 +133,8 @@ export default function CoursesAdminPage() {
       setSuccess(true);
       setForm(emptyForm);
       setTimeout(() => router.push("/admin/courses"), 1200);
+    } catch (err: any) {
+      setError(err?.message || "Failed to save course. Please check your BFF connection.");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to save course. Please check your Appwrite setup.");
 
@@ -191,6 +206,106 @@ export default function CoursesAdminPage() {
               className={inputClass}
             />
           </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className={labelClass}>Price (₹) *</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm">₹</span>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => set("price", e.target.value)}
+                  placeholder="3500"
+                  required
+                  min="0"
+                  className={`${inputClass} pl-8`}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className={labelClass}>Theme Color</label>
+              <div className="flex gap-3 items-center">
+                <input
+                  type="color"
+                  value={form.themeColor}
+                  onChange={(e) => set("themeColor", e.target.value)}
+                  className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={form.themeColor}
+                  onChange={(e) => set("themeColor", e.target.value)}
+                  className={`${inputClass} uppercase`}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClass}>Short Description (shown on course card) *</label>
+            <textarea
+              value={form.shortDescription}
+              onChange={(e) => set("shortDescription", e.target.value)}
+              placeholder="A short 1-2 line description shown on the course card..."
+              rows={2}
+              required
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClass}>About This Course (full description) *</label>
+            <textarea
+              value={form.aboutDescription}
+              onChange={(e) => set("aboutDescription", e.target.value)}
+              placeholder="This course is designed for anyone who wants to learn... (shown on course detail page)"
+              rows={4}
+              required
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+        </SectionCard>
+
+        {/* ── Images ── */}
+        <SectionCard title="Images" icon={<ImageIcon size={20} />}>
+          <div className="space-y-2">
+            <label className={labelClass}>Card Image URL</label>
+            <input
+              type="url"
+              value={form.cardImage}
+              onChange={(e) => set("cardImage", e.target.value)}
+              placeholder="https://... (image shown at top of the course card)"
+              className={inputClass}
+            />
+            {form.cardImage && (
+              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
+                <img src={form.cardImage} alt="Card preview" className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            )}
+            <p className="text-xs text-slate-400 pl-1">This image appears at the top of the course card on the homepage.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClass}>Hero Image URL</label>
+            <input
+              type="url"
+              value={form.heroImage}
+              onChange={(e) => set("heroImage", e.target.value)}
+              placeholder="https://... (large image on the course detail page)"
+              className={inputClass}
+            />
+            {form.heroImage && (
+              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-50">
+                <img src={form.heroImage} alt="Hero preview" className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            )}
+            <p className="text-xs text-slate-400 pl-1">This large illustration/image appears on the right side of the course detail page.</p>
+          </div>
+        </SectionCard>
 
           <div className="space-y-2">
             <label className={labelClass}>Price (₹) *</label>
@@ -309,6 +424,8 @@ export default function CoursesAdminPage() {
           <div className="space-y-3">
             {form.learnPoints.map((point, i) => (
               <div key={i} className="flex gap-3 items-center">
+                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-black"
+                  style={{ backgroundColor: form.themeColor }}>
                 <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-black bg-[#14B8A6]">
                   {i + 1}
                 </div>

@@ -1,19 +1,11 @@
-import { Client, Account, Databases, Storage, ID } from 'appwrite';
-
-const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
-
-if (!endpoint || !projectId) {
-  console.warn('Appwrite configuration missing. Check your .env.local file.');
-}
+import { Client, Account, ID } from 'appwrite';
+import { publicEnv } from '@/lib/env';
 
 const client = new Client();
-if (endpoint) client.setEndpoint(endpoint);
-if (projectId) client.setProject(projectId);
+client.setEndpoint(publicEnv.appwriteEndpoint);
+client.setProject(publicEnv.appwriteProjectId);
 
 export const account = new Account(client);
-export const databases = new Databases(client);
-export const storage = new Storage(client);
 export { client, ID };
 
 // Database & Collection IDs — set these in Appwrite console

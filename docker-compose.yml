@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  # ── Node.js BFF — publicly accessible on host port 3001 ──────────────────
+  bff:
+    build:
+      context: ./bff
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./bff/.env
+    environment:
+      - NODE_ENV=development
+      - PIPELINE_URL=http://pipeline:8000
+    depends_on:
+      pipeline:
+        condition: service_healthy
+    networks:
+      - internal
+
+  # ── FastAPI Pipeline — internal only (NOT published to host) ──────────────
+  pipeline:
+    build:
+      context: ./pipeline
+      dockerfile: Dockerfile
+    # No 'ports' → not accessible from host; BFF reaches it via Docker network
+    env_file:
+      - ./pipeline/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge

@@ -1,5 +1,7 @@
 "use server";
 
+import { requireServerEnv } from "@/lib/env";
+
 export async function sendContactEmail(formData: {
   name: string;
   email: string;
@@ -7,6 +9,8 @@ export async function sendContactEmail(formData: {
   subject: string;
   message: string;
 }) {
+  const RESEND_API_KEY = requireServerEnv("RESEND_API_KEY");
+  const ADMIN_EMAIL = requireServerEnv("ADMIN_EMAIL");
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const ADMIN_EMAIL = "evanshservices24651@gmail.com";
 

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api";
+import { useAuth } from "@backend/contexts/AuthContext";
 import Image from "next/image";
 import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
 import { Query, Models } from "appwrite";
@@ -14,6 +16,18 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 
+type Project = {
+  $id: string;
+  title: string;
+  description: string;
+  category: string;
+  imageId?: string;
+  imageUrl?: string;
+  order?: number;
+};
+
+export default function Admin3DPrintingPage() {
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
 type Project = Models.Document & {
   title: string;
   description: string;
@@ -33,6 +47,10 @@ export default function Admin3DPrintingPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const res = await api.adminGetProjects("3d");
+      setProjects(res.projects);
+    } catch {
+      setError("Could not load 3D printing projects. Please check your BFF connection.");
       const res = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, [
         Query.equal("category", "3D Printing"),
         Query.orderAsc("order"),
@@ -47,6 +65,10 @@ export default function Admin3DPrintingPage() {
   }, []);
 
   useEffect(() => {
+    // Only fetch after auth is confirmed to avoid 401 guest errors
+    if (isAuthLoading || !isLoggedIn) return;
+    fetchProjects();
+  }, [fetchProjects, isAuthLoading, isLoggedIn]);
     fetchProjects();
   }, [fetchProjects]);
 
@@ -54,6 +76,7 @@ export default function Admin3DPrintingPage() {
     if (!confirm(`Are you sure you want to delete "${project.title}"?`)) return;
     setDeletingId(project.$id);
     try {
+      await api.adminDeleteProject(project.$id);
       if (project.imageId) {
         await storage.deleteFile(BUCKET_ID, project.imageId).catch(() => {});
       }
@@ -66,6 +89,8 @@ export default function Admin3DPrintingPage() {
     }
   };
 
+  const getImageUrl = (project: Project): string | null => {
+    return project.imageUrl || null;
   const getImageUrl = (imageId: string) => {
     if (!imageId) return null;
     try {
@@ -153,6 +178,7 @@ export default function Admin3DPrintingPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((project) => {
+                  const imgUrl = getImageUrl(project);
                   const imgUrl = getImageUrl(project.imageId);
                   return (
                     <tr key={project.$id} className="hover:bg-slate-50 transition-colors group">
@@ -160,6 +186,9 @@ export default function Admin3DPrintingPage() {
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-10 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                             {imgUrl ? (
+                              <img
+                                src={imgUrl}
+                                alt={project.title}
                               <Image
                                 src={imgUrl.toString()}
                                 alt={project.title}

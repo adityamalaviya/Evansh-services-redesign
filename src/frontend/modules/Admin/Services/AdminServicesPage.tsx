@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api";
+import { useAuth } from "@backend/contexts/AuthContext";
 import { databases, DB_ID, SERVICES_COLLECTION_ID } from "@backend/services/appwrite";
 import { Query, Models } from "appwrite";
 import {
@@ -14,6 +16,16 @@ import {
   Briefcase,
 } from "@phosphor-icons/react";
 
+type ServiceDocument = {
+  $id: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  image?: string;
+};
+
+export default function AdminServicesPage() {
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
 type ServiceDocument = Models.Document & {
   title: string;
   subtitle: string;
@@ -32,6 +44,10 @@ export default function AdminServicesPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const res = await api.adminGetServices();
+      setServices(res.services);
+    } catch {
+      setError("Could not load services. Please check your BFF connection.");
       const res = await databases.listDocuments(DB_ID, SERVICES_COLLECTION_ID, [
         Query.orderAsc("order"),
         Query.limit(100),
@@ -45,6 +61,10 @@ export default function AdminServicesPage() {
   }, []);
 
   useEffect(() => {
+    // Only fetch after auth is confirmed to avoid 401 guest errors
+    if (isAuthLoading || !isLoggedIn) return;
+    fetchServices();
+  }, [fetchServices, isAuthLoading, isLoggedIn]);
     fetchServices();
   }, [fetchServices]);
 
@@ -52,6 +72,7 @@ export default function AdminServicesPage() {
     if (!confirm(`Are you sure you want to delete "${service.title}"?`)) return;
     setDeletingId(service.$id);
     try {
+      await api.adminDeleteService(service.$id);
       await databases.deleteDocument(DB_ID, SERVICES_COLLECTION_ID, service.$id);
       setServices((prev) => prev.filter((s) => s.$id !== service.$id));
     } catch {

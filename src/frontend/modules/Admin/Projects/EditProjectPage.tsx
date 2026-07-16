@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { api } from "@/lib/api";
 import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
 import {
   ArrowLeft,
@@ -35,13 +36,15 @@ export default function EditProjectPage() {
 
   const fetchProject = useCallback(async () => {
     try {
-      const doc: any = await databases.getDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId);
+      const doc: any = await api.adminGetProject(projectId);
       setTitle(doc.title);
       setDescription(doc.description);
       setCategory(doc.category);
       setOrder(doc.order || 0);
       setCurrentImageId(doc.imageId || "");
 
+      if (doc.imageUrl) {
+        setImagePreview(doc.imageUrl);
       if (doc.imageId) {
         const preview: any = storage.getFilePreview(BUCKET_ID, doc.imageId);
         setImagePreview(preview.toString());
@@ -79,6 +82,15 @@ export default function EditProjectPage() {
     setError(null);
 
     try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      await api.adminUpdateProject(projectId, formData);
       let finalImageId = currentImageId;
 
       if (imageFile) {
@@ -114,8 +126,12 @@ export default function EditProjectPage() {
     if (!confirm("Are you sure you want to delete this project permanently?")) return;
     setIsDeleting(true);
     try {
-      if (currentImageId) {
-        await storage.deleteFile(BUCKET_ID, currentImageId).catch(() => {});
+      // BFF handles storage file deletion server-side
+      await api.adminDeleteProject(projectId);
+      if (category === "3D Printing") {
+        router.push("/admin/projects/3d-printing");
+      } else {
+        router.push("/admin/projects");
       }
       await databases.deleteDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId);
       if (category === "3D Printing") {

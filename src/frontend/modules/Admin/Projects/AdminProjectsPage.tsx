@@ -2,9 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
-import { Query, Models } from "appwrite";
+import { api } from "@/lib/api";
+import { useAuth } from "@backend/contexts/AuthContext";
 import {
   Plus,
   PencilSimple,
@@ -14,17 +13,20 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 
-type Project = Models.Document & {
+type Project = {
+  $id: string;
   title: string;
   description: string;
   category: string;
-  imageId: string;
-  order: number;
+  imageId?: string;
+  imageUrl?: string;
+  order?: number;
 };
 
 const CATEGORIES = ["All", "Web Portals", "Websites", "Inventory Systems", "College Portals", "3D Printing"];
 
 export default function AdminProjectsPage() {
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -36,25 +38,30 @@ export default function AdminProjectsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const queries = [Query.orderAsc("order"), Query.limit(100)];
-      if (filterCategory !== "All") {
-        queries.push(Query.equal("category", filterCategory));
-      }
-      const res = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, queries);
-      setProjects(res.documents as unknown as Project[]);
+      const res = await api.adminGetProjects();
+      const filtered_cat = filterCategory !== "All"
+        ? res.projects.filter((p: any) => p.category === filterCategory)
+        : res.projects;
+      setProjects(filtered_cat);
     } catch {
-      setError("Could not load projects. Please check your Appwrite database setup.");
+      setError("Could not load projects. Please check your BFF connection.");
     } finally {
       setIsLoading(false);
     }
   }, [filterCategory]);
 
-  useEffect(() => { fetchProjects(); }, [fetchProjects]);
+  useEffect(() => {
+    // Only fetch after auth is confirmed to avoid 401 guest errors
+    if (isAuthLoading || !isLoggedIn) return;
+    fetchProjects();
+  }, [fetchProjects, isAuthLoading, isLoggedIn]);
 
   const handleDelete = async (project: Project) => {
     if (!confirm(`Are you sure you want to delete "${project.title}"?`)) return;
     setDeletingId(project.$id);
     try {
+      // BFF handles both document and storage file deletion server-side
+      await api.adminDeleteProject(project.$id);
       if (project.imageId) {
         await storage.deleteFile(BUCKET_ID, project.imageId).catch(() => {});
       }
@@ -67,13 +74,8 @@ export default function AdminProjectsPage() {
     }
   };
 
-  const getImageUrl = (imageId: string) => {
-    if (!imageId) return null;
-    try {
-      return storage.getFilePreview(BUCKET_ID, imageId, 200, 150);
-    } catch {
-      return null;
-    }
+  const getImageUrl = (project: Project): string | null => {
+    return project.imageUrl || null;
   };
 
   const filtered = projects.filter((p) =>
@@ -166,18 +168,16 @@ export default function AdminProjectsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((project) => {
-                  const imgUrl = getImageUrl(project.imageId);
+                  const imgUrl = getImageUrl(project);
                   return (
                     <tr key={project.$id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-10 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                             {imgUrl ? (
-                              <Image
-                                src={imgUrl.toString()}
+                              <img
+                                src={imgUrl}
                                 alt={project.title}
-                                width={48}
-                                height={40}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
