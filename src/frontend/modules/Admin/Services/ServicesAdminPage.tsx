@@ -15,6 +15,20 @@ export default function ServicesAdminPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const sanitizeImageUrl = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        return parsed.toString();
+      }
+      return "";
+    } catch {
+      return "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -95,7 +109,7 @@ export default function ServicesAdminPage() {
             <input
               type="url"
               value={image}
-              onChange={(e) => setImage(e.target.value)}
+              onChange={(e) => setImage(sanitizeImageUrl(e.target.value))}
               placeholder="https://... (image shown at top of the service card)"
               className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
             />
