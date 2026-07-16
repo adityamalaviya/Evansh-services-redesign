@@ -146,6 +146,15 @@ export default function AdminDashboard() {
       </div>
 
 
+      {/* Info Banner */}
+      <div className="bg-teal-50 border border-teal-100 rounded-2xl p-6">
+        <h3 className="text-[#14B8A6] font-bold mb-2">📋 Getting Started</h3>
+        <p className="text-slate-500 text-sm leading-relaxed">
+          Make sure your <span className="text-[#1E1E24] font-semibold">Appwrite Database</span> is set up with the collection ID matching{" "}
+          <code className="bg-white border border-slate-200 text-[#14B8A6] px-2 py-0.5 rounded text-xs">NEXT_PUBLIC_APPWRITE_PROJECTS_COLLECTION_ID</code>.
+          Projects added here will appear live on your website.
+        </p>
+      </div>
     </div>
   );
 }

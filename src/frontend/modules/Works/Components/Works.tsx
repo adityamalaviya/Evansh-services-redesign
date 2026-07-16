@@ -11,6 +11,11 @@ import { useAuth } from "@backend/contexts/AuthContext";
 import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
 import { publicEnv } from "@/lib/env";
 const DB_ID = publicEnv.dbId ?? "not set";
+import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
+import { Query } from "appwrite";
+import { useAuth } from "@backend/contexts/AuthContext";
+import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
+
 interface Project {
   id: string | number;
   title: string;

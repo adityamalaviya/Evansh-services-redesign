@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
+import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
 import {
   ArrowLeft,
   UploadSimple,
@@ -56,11 +57,20 @@ export default function NewProjectPage() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("category", category);
+      let imageId = "";
+
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
       await api.adminCreateProject(formData);
+      await databases.createDocument(DB_ID, PROJECTS_COLLECTION_ID, ID.unique(), {
+        title,
+        description,
+        category,
+        imageId,
+        order: Date.now(),
+      });
 
       if (category === "3D Printing") {
         router.push("/admin/projects/3d-printing");

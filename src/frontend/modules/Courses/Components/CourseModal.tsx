@@ -59,6 +59,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
 
   const handleStartLearning = () => {
     if (!isLoading && !isLoggedIn) {
+      // Redirect to login with a return path so we can auto-open the course modal after login
       const courseName = course?.title ?? "";
       router.push(`/login?redirect=/courses&course=${encodeURIComponent(courseName)}`);
     } else {
@@ -157,6 +158,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
                     <span className="text-3xl font-black text-slate-900">{priceDisplay}</span>
                   </div>
                   <button
+                  <button 
                     onClick={handleStartLearning}
                     disabled={isLoading}
                     className="flex items-center justify-center gap-3 text-white px-10 py-4 rounded-2xl font-black transition-all hover:scale-105 active:scale-95 shadow-lg shadow-teal-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -216,6 +218,20 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
                   {f.subtitle && <p className="text-[11px] md:text-xs font-medium text-slate-400">{f.subtitle}</p>}
                 </div>
               ))}
+            {/* Features Section - Middle Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+              <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                <h3 className="text-sm md:text-base font-black text-slate-900 mb-1">Beginner Friendly</h3>
+                <p className="text-[11px] md:text-xs font-medium text-slate-400">Start from the basics.</p>
+              </div>
+              <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                <h3 className="text-sm md:text-base font-black text-slate-900 mb-1">Practical Learning</h3>
+                <p className="text-[11px] md:text-xs font-medium text-slate-400">Hands-on examples.</p>
+              </div>
+              <div className="bg-white border border-slate-100 rounded-2xl p-5">
+                <h3 className="text-sm md:text-base font-black text-slate-900 mb-1">In-Demand Skills</h3>
+                <p className="text-[11px] md:text-xs font-medium text-slate-400">Boost your career.</p>
+              </div>
             </div>
 
             {/* Bottom Content Section */}

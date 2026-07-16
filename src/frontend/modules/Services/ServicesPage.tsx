@@ -6,6 +6,8 @@ import { ArrowRight } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
 import { api } from "@/lib/api";
+import { databases, DB_ID, SERVICES_COLLECTION_ID } from "@backend/services/appwrite";
+import { Query } from "appwrite";
 
 const staticServices = [
   {
@@ -82,11 +84,21 @@ const ServicesPage = () => {
             title: doc.title,
             description: doc.description || "",
             image: doc.image || ""
+        const res = await databases.listDocuments(DB_ID, SERVICES_COLLECTION_ID, [
+          Query.orderAsc("order"),
+          Query.limit(100)
+        ]);
+        if (res.documents.length > 0) {
+          const mapped = res.documents.map((doc: any) => ({
+            title: doc.title,
+            description: doc.subtitle || doc.description || "",
+            image: doc.image || doc.imageUrl || ""
           }));
           setActiveServices(mapped);
         }
       } catch (err) {
         console.warn("BFF services fetch failed, using local fallback:", err);
+        console.warn("Appwrite services fetch failed, using local fallback:", err);
       }
     };
     fetchServices();

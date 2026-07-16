@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@/lib/api";
+import { databases, DB_ID, SERVICES_COLLECTION_ID, ID } from "@backend/services/appwrite";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -14,6 +15,20 @@ export default function ServicesAdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const sanitizeImageUrl = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        return parsed.toString();
+      }
+      return "";
+    } catch {
+      return "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +44,12 @@ export default function ServicesAdminPage() {
         image,
         display_order: 0,
         active: true,
+      await databases.createDocument(DB_ID, SERVICES_COLLECTION_ID, ID.unique(), {
+        title,
+        subtitle,
+        description: subtitle, // fall back for backwards compatibility if description attribute is used
+        image,
+        order: Date.now(),
       });
 
       setSuccess(true);
@@ -38,6 +59,7 @@ export default function ServicesAdminPage() {
       setTimeout(() => router.push("/admin/services"), 1200);
     } catch (err: any) {
       setError(err?.message || "Failed to save service. Please check your BFF connection.");
+      setError(err?.message || "Failed to save service. Please check your Appwrite setup.");
     } finally {
       setIsSubmitting(false);
     }
@@ -97,6 +119,7 @@ export default function ServicesAdminPage() {
               type="url"
               value={image}
               onChange={(e) => setImage(e.target.value)}
+              onChange={(e) => setImage(sanitizeImageUrl(e.target.value))}
               placeholder="https://... (image shown at top of the service card)"
               className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
             />

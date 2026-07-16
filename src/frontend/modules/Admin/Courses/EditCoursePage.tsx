@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@/lib/api";
+import { databases, DB_ID, COURSES_COLLECTION_ID } from "@backend/services/appwrite";
 import Link from "next/link";
 
 interface Feature {
@@ -59,6 +60,7 @@ export default function EditCoursePage() {
   const fetchCourse = useCallback(async () => {
     try {
       const doc: any = await api.adminGetCourse(courseId);
+      const doc: any = await databases.getDocument(DB_ID, COURSES_COLLECTION_ID, courseId);
       setForm({
         title: doc.title || "",
         subtitle: doc.subtitle || "",
@@ -67,6 +69,10 @@ export default function EditCoursePage() {
         price: doc.price?.toString() || "0",
         cardImage: doc.cardImageUrl || doc.cardImage || "",
         heroImage: doc.heroImageUrl || doc.heroImage || "",
+        aboutDescription: doc.aboutDescription || "",
+        price: doc.price?.toString() || "0",
+        cardImage: doc.cardImage || "",
+        heroImage: doc.heroImage || "",
         themeColor: doc.themeColor || "#14B8A6",
         features: [
           { title: doc.feature1Title || "Beginner Friendly", subtitle: doc.feature1Subtitle || "Start from the basics." },
@@ -76,6 +82,7 @@ export default function EditCoursePage() {
         learnPoints: doc.whatYouWillLearn
           ? doc.whatYouWillLearn.split("\n").filter(Boolean)
           : (doc.learnPoints && doc.learnPoints.length > 0 ? doc.learnPoints : [""]),
+        learnPoints: doc.learnPoints && doc.learnPoints.length > 0 ? doc.learnPoints : [""],
       });
     } catch (err) {
       setError("Course not found or connection error.");
@@ -140,6 +147,15 @@ export default function EditCoursePage() {
         slug: form.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         cardImageUrl: form.cardImage,
         heroImageUrl: form.heroImage,
+      await databases.updateDocument(DB_ID, COURSES_COLLECTION_ID, courseId, {
+        title: form.title,
+        subtitle: form.subtitle,
+        shortDescription: form.shortDescription,
+        description: form.shortDescription, // sync description
+        aboutDescription: form.aboutDescription,
+        price: parseInt(form.price) || 0,
+        cardImage: form.cardImage,
+        heroImage: form.heroImage,
         themeColor: form.themeColor,
         feature1Title: form.features[0]?.title || "",
         feature1Subtitle: form.features[0]?.subtitle || "",
@@ -148,6 +164,7 @@ export default function EditCoursePage() {
         feature3Title: form.features[2]?.title || "",
         feature3Subtitle: form.features[2]?.subtitle || "",
         whatYouWillLearn: form.learnPoints.filter((p) => p.trim() !== "").join("\n"),
+        learnPoints: form.learnPoints.filter((p) => p.trim() !== ""),
       });
 
       router.push("/admin/courses");

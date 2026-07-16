@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
+import { databases, DB_ID, COURSES_COLLECTION_ID } from "@backend/services/appwrite";
+import { Query, Models } from "appwrite";
 import {
   Plus,
   PencilSimple,
@@ -17,6 +19,9 @@ type CourseDocument = {
   $id: string;
   title: string;
   shortDescription?: string;
+type CourseDocument = Models.Document & {
+  title: string;
+  shortDescription: string;
   price: number;
   themeColor: string;
 };
@@ -37,6 +42,13 @@ export default function AdminCoursesPage() {
       setCourses(res.courses);
     } catch {
       setError("Could not load courses. Please check your BFF connection.");
+      const res = await databases.listDocuments(DB_ID, COURSES_COLLECTION_ID, [
+        Query.orderAsc("order"),
+        Query.limit(100),
+      ]);
+      setCourses(res.documents as unknown as CourseDocument[]);
+    } catch {
+      setError("Could not load courses. Please check your Appwrite database setup.");
     } finally {
       setIsLoading(false);
     }
@@ -47,12 +59,15 @@ export default function AdminCoursesPage() {
     if (isAuthLoading || !isLoggedIn) return;
     fetchCourses();
   }, [fetchCourses, isAuthLoading, isLoggedIn]);
+    fetchCourses();
+  }, [fetchCourses]);
 
   const handleDelete = async (course: CourseDocument) => {
     if (!confirm(`Are you sure you want to delete "${course.title}"?`)) return;
     setDeletingId(course.$id);
     try {
       await api.adminDeleteCourse(course.$id);
+      await databases.deleteDocument(DB_ID, COURSES_COLLECTION_ID, course.$id);
       setCourses((prev) => prev.filter((c) => c.$id !== course.$id));
     } catch {
       alert("Failed to delete course. Please try again.");

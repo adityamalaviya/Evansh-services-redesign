@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
+import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
 import {
   ArrowLeft,
   UploadSimple,
@@ -44,6 +45,9 @@ export default function EditProjectPage() {
 
       if (doc.imageUrl) {
         setImagePreview(doc.imageUrl);
+      if (doc.imageId) {
+        const preview: any = storage.getFilePreview(BUCKET_ID, doc.imageId);
+        setImagePreview(preview.toString());
       }
     } catch (err: any) {
       setError("Project not found or connection error.");
@@ -87,6 +91,23 @@ export default function EditProjectPage() {
       }
 
       await api.adminUpdateProject(projectId, formData);
+      let finalImageId = currentImageId;
+
+      if (imageFile) {
+        if (currentImageId) {
+          try { await storage.deleteFile(BUCKET_ID, currentImageId); } catch (e) {}
+        }
+        const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
+        finalImageId = uploadedFile.$id;
+      }
+
+      await databases.updateDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId, {
+        title,
+        description,
+        category,
+        imageId: finalImageId,
+        order: category === "3D Printing" ? (order || Date.now()) : Number(order),
+      });
 
       if (category === "3D Printing") {
         router.push("/admin/projects/3d-printing");
@@ -107,6 +128,12 @@ export default function EditProjectPage() {
     try {
       // BFF handles storage file deletion server-side
       await api.adminDeleteProject(projectId);
+      if (category === "3D Printing") {
+        router.push("/admin/projects/3d-printing");
+      } else {
+        router.push("/admin/projects");
+      }
+      await databases.deleteDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId);
       if (category === "3D Printing") {
         router.push("/admin/projects/3d-printing");
       } else {

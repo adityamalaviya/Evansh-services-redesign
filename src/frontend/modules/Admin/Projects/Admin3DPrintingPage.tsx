@@ -4,6 +4,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
+import Image from "next/image";
+import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
+import { Query, Models } from "appwrite";
 import {
   Plus,
   PencilSimple,
@@ -25,6 +28,15 @@ type Project = {
 
 export default function Admin3DPrintingPage() {
   const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
+type Project = Models.Document & {
+  title: string;
+  description: string;
+  category: string;
+  imageId: string;
+  order: number;
+};
+
+export default function Admin3DPrintingPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -39,6 +51,14 @@ export default function Admin3DPrintingPage() {
       setProjects(res.projects);
     } catch {
       setError("Could not load 3D printing projects. Please check your BFF connection.");
+      const res = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, [
+        Query.equal("category", "3D Printing"),
+        Query.orderAsc("order"),
+        Query.limit(100),
+      ]);
+      setProjects(res.documents as unknown as Project[]);
+    } catch {
+      setError("Could not load 3D printing projects. Please check your Appwrite database setup.");
     } finally {
       setIsLoading(false);
     }
@@ -49,12 +69,18 @@ export default function Admin3DPrintingPage() {
     if (isAuthLoading || !isLoggedIn) return;
     fetchProjects();
   }, [fetchProjects, isAuthLoading, isLoggedIn]);
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleDelete = async (project: Project) => {
     if (!confirm(`Are you sure you want to delete "${project.title}"?`)) return;
     setDeletingId(project.$id);
     try {
       await api.adminDeleteProject(project.$id);
+      if (project.imageId) {
+        await storage.deleteFile(BUCKET_ID, project.imageId).catch(() => {});
+      }
+      await databases.deleteDocument(DB_ID, PROJECTS_COLLECTION_ID, project.$id);
       setProjects((prev) => prev.filter((p) => p.$id !== project.$id));
     } catch {
       alert("Failed to delete project. Please try again.");
@@ -65,6 +91,13 @@ export default function Admin3DPrintingPage() {
 
   const getImageUrl = (project: Project): string | null => {
     return project.imageUrl || null;
+  const getImageUrl = (imageId: string) => {
+    if (!imageId) return null;
+    try {
+      return storage.getFilePreview(BUCKET_ID, imageId, 200, 150);
+    } catch {
+      return null;
+    }
   };
 
   const filtered = projects.filter((p) =>
@@ -146,6 +179,7 @@ export default function Admin3DPrintingPage() {
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((project) => {
                   const imgUrl = getImageUrl(project);
+                  const imgUrl = getImageUrl(project.imageId);
                   return (
                     <tr key={project.$id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-6 py-4">
@@ -155,6 +189,11 @@ export default function Admin3DPrintingPage() {
                               <img
                                 src={imgUrl}
                                 alt={project.title}
+                              <Image
+                                src={imgUrl.toString()}
+                                alt={project.title}
+                                width={48}
+                                height={40}
                                 className="w-full h-full object-cover"
                               />
                             ) : (

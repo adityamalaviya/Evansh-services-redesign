@@ -7,12 +7,14 @@ import {
 } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import CourseModal, { CourseModalData } from "./CourseModal";
+import CourseModal from "./CourseModal";
 
 // ── Course interface — same as before + extra fields for modal ──────────────
 interface Course {
   id: number | string;
   title: string;
   description: string;   // used on the card (shortDescription from DB)
+  description: string;
   color: string;
   bgColor: string;
   borderColor: string;
@@ -94,6 +96,7 @@ interface CoursesProps {
 }
 
 // ── Card component — identical to original ────────────────────────────────
+// Single card component
 const CourseCard: React.FC<{ course: Course; onClick: (course: Course) => void }> = ({ course, onClick }) => (
   <div
     onClick={() => onClick(course)}
@@ -145,6 +148,8 @@ const CourseCard: React.FC<{ course: Course; onClick: (course: Course) => void }
 );
 
 import { api } from "@/lib/api";
+import { databases, DB_ID, COURSES_COLLECTION_ID } from "@backend/services/appwrite";
+import { Query } from "appwrite";
 
 const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
   const [isVisible, setIsVisible] = useState(forceVisible);
@@ -163,6 +168,13 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
         if (res.courses.length > 0) {
           const mapped: Course[] = res.courses.map((doc: any) => ({
             id: doc.id,
+        const res = await databases.listDocuments(DB_ID, COURSES_COLLECTION_ID, [
+          Query.orderAsc("order"),
+          Query.limit(100)
+        ]);
+        if (res.documents.length > 0) {
+          const mapped: Course[] = res.documents.map((doc: any) => ({
+            id: doc.$id,
             title: doc.title,
             description: doc.shortDescription || doc.description || "",
             color: doc.themeColor || "#14B8A6",
@@ -181,11 +193,13 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
             feature3Title: doc.feature3Title,
             feature3Subtitle: doc.feature3Subtitle,
             whatYouWillLearn: doc.whatYouWillLearn,
+            image: doc.cardImage || doc.image || ""
           }));
           setActiveCourses(mapped);
         }
       } catch (err) {
         console.warn("BFF courses fetch failed, using local fallback:", err);
+        console.warn("Appwrite courses fetch failed, using local fallback:", err);
       }
     };
     fetchCoursesFromAppwrite();
@@ -312,6 +326,15 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         course={modalData}
+        course={
+          selectedCourse
+            ? {
+                title: selectedCourse.title,
+                description: selectedCourse.description,
+                color: selectedCourse.color
+              }
+            : null
+        }
       />
     </>
   );
