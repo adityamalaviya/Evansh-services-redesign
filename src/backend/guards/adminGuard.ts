@@ -3,7 +3,9 @@
  * Admin email is stored in NEXT_PUBLIC_ADMIN_EMAIL environment variable.
  */
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? '';
+import { publicEnv } from '@/lib/env';
+
+const ADMIN_EMAIL = publicEnv.adminEmail;
 
 export function isAdmin(userEmail: string | null | undefined): boolean {
   const normalizedAdmin = ADMIN_EMAIL.trim().toLowerCase();

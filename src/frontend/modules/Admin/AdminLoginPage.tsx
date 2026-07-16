@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { EnvelopeSimple, LockKey, Eye, EyeSlash, Hexagon, ShieldWarning } from "@phosphor-icons/react";
 import { useAuth } from "@backend/contexts/AuthContext";
 import { isAdmin } from "@backend/guards/adminGuard";
+import { publicEnv } from "@/lib/env";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function AdminLoginPage() {
       await login(email.trim(), password);
       
       // Get admin email from env
-      const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
+      const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
       
       if (email.trim().toLowerCase() !== adminEmail) {
         setError(`Access denied. ${email} is not an admin account.`);

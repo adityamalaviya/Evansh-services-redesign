@@ -1,6 +1,7 @@
 import { account } from "@/backend/services/appwrite";
+import { publicEnv } from '@/lib/env';
 
-const BFF_BASE = process.env.NEXT_PUBLIC_BFF_URL ?? 'http://localhost:3001';
+const BFF_BASE = publicEnv.bffUrl;
 
 interface ApiError {
   error: { code: string; message: string; fields?: Record<string, string[]> };

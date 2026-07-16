@@ -3,4 +3,10 @@ dist/
 .env
 .env.*
 !.env.example
-".next/" 
+.env.local
+.env.*.local
+.next/
+backend/.env
+backend/__pycache__/
+*.pyc
+pipeline/.venv/

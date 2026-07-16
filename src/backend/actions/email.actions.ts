@@ -1,5 +1,7 @@
 "use server";
 
+import { requireServerEnv } from "@/lib/env";
+
 export async function sendContactEmail(formData: {
   name: string;
   email: string;
@@ -7,15 +9,8 @@ export async function sendContactEmail(formData: {
   subject: string;
   message: string;
 }) {
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  const ADMIN_EMAIL = "evanshservices24651@gmail.com";
-
-  if (!RESEND_API_KEY) {
-    console.error("RESEND_API_KEY is not set in environment variables.");
-    // We return success true to not block the UI if the user hasn't set the key yet, 
-    // but we log the error. In production, you'd want to handle this better.
-    return { success: false, error: "Email service not configured. Please add RESEND_API_KEY to .env.local" };
-  }
+  const RESEND_API_KEY = requireServerEnv("RESEND_API_KEY");
+  const ADMIN_EMAIL = requireServerEnv("ADMIN_EMAIL");
 
   try {
     const response = await fetch("https://api.resend.com/emails", {

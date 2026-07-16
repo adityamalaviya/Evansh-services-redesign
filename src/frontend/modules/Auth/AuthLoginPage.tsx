@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@backend/contexts/AuthContext";
+import { publicEnv } from "@/lib/env";
 
 export default function AuthLoginPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function AuthLoginPage() {
   // If already logged in, redirect appropriately
   useEffect(() => {
     if (!isLoading && isLoggedIn && user) {
-      const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
+      const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
       const isAdmin = user.email?.trim().toLowerCase() === adminEmail;
       router.push(getRedirectUrl(isAdmin));
     }
@@ -54,7 +55,7 @@ export default function AuthLoginPage() {
       await login(email, password);
 
       // Redirect: admin → /admin, everyone else → redirect param or home
-      const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
+      const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
       const isAdmin = email.trim().toLowerCase() === adminEmail;
       router.push(getRedirectUrl(isAdmin));
     } catch (err: unknown) {

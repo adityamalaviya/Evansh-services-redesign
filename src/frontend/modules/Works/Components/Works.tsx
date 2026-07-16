@@ -9,7 +9,8 @@ import { tokens } from "@frontend/styles/tokens";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
-const DB_ID = process.env.NEXT_PUBLIC_DB_ID ?? "not set";
+import { publicEnv } from "@/lib/env";
+const DB_ID = publicEnv.dbId ?? "not set";
 interface Project {
   id: string | number;
   title: string;
