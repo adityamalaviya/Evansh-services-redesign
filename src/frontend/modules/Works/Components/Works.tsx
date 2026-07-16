@@ -6,13 +6,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Globe, Laptop, Database, GraduationCap, Cube, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
-import { api } from "@/lib/api";
-import { useAuth } from "@backend/contexts/AuthContext";
-import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
-import { publicEnv } from "@/lib/env";
-const DB_ID = publicEnv.dbId ?? "not set";
 import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
-import { Query } from "appwrite";
+import { Models, Query } from "appwrite";
 import { useAuth } from "@backend/contexts/AuthContext";
 import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
 
@@ -70,20 +65,23 @@ const Works: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await api.getProjects();
+        const res = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, [
+          Query.orderAsc("order"),
+          Query.limit(100)
+        ]);
         
-        const fetchedProjects = res.projects.map((doc: any) => ({
-          id: doc.id,
-          title: doc.title,
-          category: doc.category,
-          description: doc.description,
-          image: doc.imageUrl || ""
+        const fetchedProjects = res.documents.map((doc: Models.Document & { title?: string; category?: string; description?: string; imageId?: string }) => ({
+          id: doc.$id,
+          title: doc.title || "",
+          category: doc.category || "",
+          description: doc.description || "",
+          image: doc.imageId ? storage.getFilePreview(BUCKET_ID, doc.imageId).toString() : ""
         }));
         
         setDbProjects(fetchedProjects);
-      } catch (err: any) {
-        console.error("BFF Fetch error:", err);
-        setError(`Failed to connect to database: ${err.message || 'Unknown error'}`);
+      } catch (err: unknown) {
+        console.error("DB Fetch error:", err);
+        setError(`Failed to connect to database: ${err instanceof Error ? err.message : "Unknown error"}`);
       } finally {
         setLoading(false);
       }

@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentUser = await account.get();
         setUser(currentUser);
         setIsLoggedIn(true);
-      } catch (error) {
+      } catch {
         setUser(null);
         setIsLoggedIn(false);
       } finally {

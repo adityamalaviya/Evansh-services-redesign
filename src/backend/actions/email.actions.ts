@@ -77,8 +77,8 @@ export async function sendContactEmail(formData: {
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Email API failed:", err);
-    return { success: false, error: err.message };
+    return { success: false, error: err instanceof Error ? err.message : "Failed to send email" };
   }
 }

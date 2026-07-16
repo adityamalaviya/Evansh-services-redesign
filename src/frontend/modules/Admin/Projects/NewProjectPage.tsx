@@ -78,9 +78,9 @@ export default function NewProjectPage() {
         router.push("/admin/projects");
       }
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Creation error:", err);
-      setError(err.message || "Something went wrong while saving the project.");
+      setError(err instanceof Error ? err.message : "Something went wrong while saving the project.");
     } finally {
       setIsSubmitting(false);
     }

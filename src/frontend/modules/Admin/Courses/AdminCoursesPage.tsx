@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { startTransition, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
-import { useAuth } from "@backend/contexts/AuthContext";
 import { databases, DB_ID, COURSES_COLLECTION_ID } from "@backend/services/appwrite";
 import { Query, Models } from "appwrite";
 import {
@@ -15,10 +13,6 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 
-type CourseDocument = {
-  $id: string;
-  title: string;
-  shortDescription?: string;
 type CourseDocument = Models.Document & {
   title: string;
   shortDescription: string;
@@ -27,7 +21,6 @@ type CourseDocument = Models.Document & {
 };
 
 export default function AdminCoursesPage() {
-  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
   const [courses, setCourses] = useState<CourseDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -38,10 +31,6 @@ export default function AdminCoursesPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.adminGetCourses();
-      setCourses(res.courses);
-    } catch {
-      setError("Could not load courses. Please check your BFF connection.");
       const res = await databases.listDocuments(DB_ID, COURSES_COLLECTION_ID, [
         Query.orderAsc("order"),
         Query.limit(100),
@@ -55,18 +44,13 @@ export default function AdminCoursesPage() {
   }, []);
 
   useEffect(() => {
-    // Only fetch after auth is confirmed to avoid 401 guest errors
-    if (isAuthLoading || !isLoggedIn) return;
-    fetchCourses();
-  }, [fetchCourses, isAuthLoading, isLoggedIn]);
-    fetchCourses();
+    startTransition(() => { void fetchCourses(); });
   }, [fetchCourses]);
 
   const handleDelete = async (course: CourseDocument) => {
     if (!confirm(`Are you sure you want to delete "${course.title}"?`)) return;
     setDeletingId(course.$id);
     try {
-      await api.adminDeleteCourse(course.$id);
       await databases.deleteDocument(DB_ID, COURSES_COLLECTION_ID, course.$id);
       setCourses((prev) => prev.filter((c) => c.$id !== course.$id));
     } catch {
@@ -162,7 +146,7 @@ export default function AdminCoursesPage() {
                       <td className="px-6 py-4">
                         <div>
                           <p className="text-[#1E1E24] font-semibold text-sm leading-tight line-clamp-1">{course.title}</p>
-                        <p className="text-slate-400 text-xs mt-0.5 line-clamp-1">{course.shortDescription || (course as any).description}</p>
+                        <p className="text-slate-400 text-xs mt-0.5 line-clamp-1">{course.shortDescription || (course as CourseDocument & { description?: string }).description}</p>
                         </div>
                       </td>
                       <td className="px-4 py-4">

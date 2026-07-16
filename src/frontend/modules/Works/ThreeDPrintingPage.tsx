@@ -8,7 +8,8 @@ import { tokens } from "@frontend/styles/tokens";
 import Header from "@frontend/components/Navigation/Header/Header";
 import Footer from "@frontend/components/Navigation/Footer/Footer";
 
-import { api } from "@/lib/api";
+import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID } from "@backend/services/appwrite";
+import { Query, Models } from "appwrite";
 
 interface Project {
   id: string | number;
@@ -36,14 +37,18 @@ export default function ThreeDPrintingPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await api.getProjects("3d");
+        const res = await databases.listDocuments(DB_ID, PROJECTS_COLLECTION_ID, [
+          Query.equal("category", "3D Printing"),
+          Query.orderAsc("order"),
+          Query.limit(100)
+        ]);
         
-        const fetchedProjects = res.projects.map((doc: any) => ({
-          id: doc.id,
-          title: doc.title,
-          category: doc.category,
-          description: doc.description,
-          image: doc.imageUrl || ""
+        const fetchedProjects = res.documents.map((doc: Models.Document & { title?: string; category?: string; description?: string; imageId?: string }) => ({
+          id: doc.$id,
+          title: doc.title || "",
+          category: doc.category || "",
+          description: doc.description || "",
+          image: doc.imageId ? storage.getFilePreview(BUCKET_ID, doc.imageId).toString() : ""
         }));
         
         setDbProjects(fetchedProjects);

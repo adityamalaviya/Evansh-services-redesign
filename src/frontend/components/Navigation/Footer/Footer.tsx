@@ -25,7 +25,7 @@ function AnimatedContainer({
 	const shouldReduceMotion = useReducedMotion();
 
 	if (shouldReduceMotion) {
-		return <div {...(props as any)}>{children}</div>;
+		return <div {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>;
 	}
 
 	return (

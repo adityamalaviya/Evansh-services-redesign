@@ -49,7 +49,7 @@ export default function EditProjectPage() {
         const preview: any = storage.getFilePreview(BUCKET_ID, doc.imageId);
         setImagePreview(preview.toString());
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError("Project not found or connection error.");
     } finally {
       setIsLoading(false);
@@ -115,8 +115,8 @@ export default function EditProjectPage() {
         router.push("/admin/projects");
       }
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Failed to update project.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update project.");
     } finally {
       setIsSubmitting(false);
     }
