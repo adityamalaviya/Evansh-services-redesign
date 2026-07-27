@@ -5,23 +5,23 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
   // Appwrite — server-side only, never sent to frontend
-  APPWRITE_ENDPOINT: z.string().url(),
-  APPWRITE_PROJECT_ID: z.string().min(1),
+  APPWRITE_ENDPOINT: z.string().url().default(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT ?? ''),
+  APPWRITE_PROJECT_ID: z.string().min(1).default(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? ''),
   APPWRITE_API_KEY: z.string().min(1),
 
   // Database
-  APPWRITE_DB_ID: z.string().min(1),
-  APPWRITE_BUCKET_ID: z.string().min(1),
+  APPWRITE_DB_ID: z.string().min(1).default(process.env.NEXT_PUBLIC_APPWRITE_DB_ID ?? ''),
+  APPWRITE_BUCKET_ID: z.string().min(1).default(process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ?? ''),
 
   // Admin
-  ADMIN_EMAIL: z.string().email(),
+  ADMIN_EMAIL: z.string().email().default(process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? ''),
 
   // Internal FastAPI pipeline
   PIPELINE_SERVICE_TOKEN: z.string().min(32),
-  PIPELINE_URL: z.string().url().default('http://localhost:8000'),
+  PIPELINE_URL: z.string().url().default(process.env.NEXT_PUBLIC_PIPELINE_URL ?? 'http://localhost:8000'),
 
   // CORS
-  ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
+  ALLOWED_ORIGINS: z.string().default(process.env.NEXT_PUBLIC_ALLOWED_ORIGINS ?? 'http://localhost:3000'),
 
   // Email
   RESEND_API_KEY: z.string().optional(),
@@ -32,6 +32,11 @@ const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
   console.error('❌ Invalid environment variables:');
   console.error(parsed.error.flatten().fieldErrors);
+  process.exit(1);
+}
+
+if (parsed.data.NODE_ENV === 'production' && !process.env.ALLOWED_ORIGINS) {
+  console.error('❌ ALLOWED_ORIGINS must be explicitly configured in production');
   process.exit(1);
 }
 
