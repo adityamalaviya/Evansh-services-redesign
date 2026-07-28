@@ -42,6 +42,7 @@ export default function AuthLoginPage() {
   useEffect(() => {
     if (!isLoading && isLoggedIn && user) {
       const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
+      const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
       const isAdmin = user.email?.trim().toLowerCase() === adminEmail;
       router.push(getRedirectUrl(isAdmin));
     }
@@ -57,6 +58,7 @@ export default function AuthLoginPage() {
 
       // Redirect: admin → /admin, everyone else → redirect param or home
       const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
+      const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim().toLowerCase();
       const isAdmin = email.trim().toLowerCase() === adminEmail;
       router.push(getRedirectUrl(isAdmin));
     } catch (err: unknown) {

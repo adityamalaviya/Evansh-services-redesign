@@ -29,9 +29,9 @@ export default function RegisterPage() {
       await account.create(ID.unique(), email, password, name);
       await account.createEmailPasswordSession(email, password);
       router.push("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Registration failed:", err);
-      setError(err.message || "Registration failed. Please try again.");
+      setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { startTransition, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EnvelopeSimple, LockKey, Eye, EyeSlash, Hexagon, ShieldWarning } from "@phosphor-icons/react";
 import { useAuth } from "@backend/contexts/AuthContext";
@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (searchParams.get("error") === "access_denied") {
-      setError("Access denied. This account does not have admin privileges.");
+      startTransition(() => setError("Access denied. This account does not have admin privileges."));
     }
   }, [searchParams]);
 
