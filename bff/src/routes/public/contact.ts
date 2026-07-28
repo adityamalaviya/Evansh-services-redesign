@@ -98,6 +98,17 @@ async function sendContactEmail(data: {
     return;
   }
 
+  const escapeHtml = (value: string) => value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const safe = Object.fromEntries(
+    Object.entries(data).map(([key, value]) => [key, escapeHtml(value)])
+  ) as typeof data;
+
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -111,13 +122,13 @@ async function sendContactEmail(data: {
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;border:1px solid #e2e8f0;border-radius:16px;">
           <h2 style="color:#0f172a">New Contact Inquiry</h2>
-          <p><strong>Name:</strong> ${data.name}</p>
-          <p><strong>Email:</strong> ${data.email}</p>
-          <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
-          <p><strong>Subject:</strong> ${data.subject}</p>
+          <p><strong>Name:</strong> ${safe.name}</p>
+          <p><strong>Email:</strong> ${safe.email}</p>
+          <p><strong>Phone:</strong> ${safe.phone || 'Not provided'}</p>
+          <p><strong>Subject:</strong> ${safe.subject}</p>
           <hr style="margin:16px 0;border:none;border-top:1px solid #e2e8f0;">
           <p><strong>Message:</strong></p>
-          <p style="white-space:pre-wrap;background:#f8fafc;padding:16px;border-radius:8px;">${data.message}</p>
+          <p style="white-space:pre-wrap;background:#f8fafc;padding:16px;border-radius:8px;">${safe.message}</p>
         </div>
       `,
     }),

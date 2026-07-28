@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
-import { api } from "@/lib/api";
-import { databases, DB_ID, SERVICES_COLLECTION_ID } from "@backend/services/appwrite";
+import { api, formatApiError } from "@/lib/api";
 import Link from "next/link";
 
 const inputClass =
@@ -15,6 +14,7 @@ interface ServiceForm {
   title: string;
   subtitle: string;
   image: string;
+  imageFile?: File | null;
 }
 
 export default function EditServicePage() {
@@ -30,14 +30,13 @@ export default function EditServicePage() {
   const fetchService = useCallback(async () => {
     try {
       const doc: any = await api.adminGetService(serviceId);
-      const doc: any = await databases.getDocument(DB_ID, SERVICES_COLLECTION_ID, serviceId);
       setForm({
         title: doc.title || "",
         subtitle: doc.subtitle || doc.description || "",
         image: doc.image || "",
       });
-    } catch {
-      setError("Service not found or connection error.");
+    } catch (err: any) {
+      setError(formatApiError(err, "Service not found or connection error."));
     } finally {
       setIsLoading(false);
     }
@@ -59,20 +58,18 @@ export default function EditServicePage() {
     setError(null);
 
     try {
+      const uploaded = form.imageFile ? await api.adminUpdateImage("services", form.imageFile) : null;
       await api.adminUpdateService(serviceId, {
         title: form.title,
         slug: form.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         description: form.subtitle,
-      await databases.updateDocument(DB_ID, SERVICES_COLLECTION_ID, serviceId, {
-        title: form.title,
-        subtitle: form.subtitle,
-        description: form.subtitle, // backward compatibility
-        image: form.image,
+        image: uploaded?.image_url || form.image,
+        imageFileId: uploaded?.file_id || "",
       });
       router.push("/admin/services");
       router.refresh();
     } catch (err: any) {
-      setError(err?.message || "Failed to update service.");
+      setError(formatApiError(err, "Failed to update service."));
     } finally {
       setIsSubmitting(false);
     }
@@ -98,12 +95,22 @@ export default function EditServicePage() {
           </Link>
           <h1 className="text-2xl font-black text-[#1E1E24]">Edit Service</h1>
         </div>
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-6">
-          <Warning size={24} className="flex-shrink-0" />
-          <div>
-            <p className="font-bold">Error loading service</p>
-            <p className="text-sm opacity-90 mt-1">{error || "Service not found."}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-6">
+          <div className="flex items-start gap-3">
+            <Warning size={24} className="flex-shrink-0" />
+            <div>
+              <p className="font-bold">Error loading service</p>
+              <p className="text-sm opacity-90 mt-1">{error || "Service not found."}</p>
+            </div>
           </div>
+          {error?.includes("Session expired") && (
+            <Link
+              href="/admin/login"
+              className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -153,12 +160,16 @@ export default function EditServicePage() {
 
           {/* Image */}
           <div className="space-y-2">
-            <label className={labelClass}>Service Image URL</label>
+            <label className={labelClass}>Service Image</label>
             <input
-              type="url"
-              value={form.image}
-              onChange={(e) => set("image", e.target.value)}
-              placeholder="https://... (image shown at top of the service card)"
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file && file.size <= 2 * 1024 * 1024) {
+                  setForm((prev) => prev ? ({ ...prev, imageFile: file, image: URL.createObjectURL(file) }) : prev);
+                } else if (file) setError("Image must be JPG or PNG and 2MB or smaller.");
+              }}
               className={inputClass}
             />
             {form.image && (

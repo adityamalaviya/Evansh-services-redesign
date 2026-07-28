@@ -4,10 +4,9 @@ import React from "react";
 import Link from "next/link";
 import {
 	Hexagon,
-	InstagramLogo,
+	WhatsappLogo,
 	LinkedinLogo,
-	TwitterLogo,
-	YoutubeLogo
+	XLogo
 } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { tokens } from "@frontend/styles/tokens";
@@ -71,17 +70,14 @@ const Footer: React.FC = () => {
 							Empowering students through concept-based learning and expert guidance for a brighter future.
 						</p>
 						<div className="flex items-center gap-2.5 justify-center md:justify-start">
-							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
-								<InstagramLogo size={17} weight="bold" />
+							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200" aria-label="WhatsApp">
+								<WhatsappLogo size={17} weight="bold" />
 							</a>
-							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
+							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200" aria-label="LinkedIn">
 								<LinkedinLogo size={17} weight="bold" />
 							</a>
-							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
-								<TwitterLogo size={17} weight="bold" />
-							</a>
-							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200">
-								<YoutubeLogo size={17} weight="bold" />
+							<a href="#" className="w-9 h-9 rounded-full bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-300 hover:bg-teal-500 hover:text-white hover:border-teal-500 hover:scale-110 transition-all duration-200" aria-label="X (Twitter)">
+								<XLogo size={17} weight="bold" />
 							</a>
 						</div>
 					</AnimatedContainer>

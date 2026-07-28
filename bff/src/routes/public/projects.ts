@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { databases, DB_ID, COLLECTIONS, Query, getFilePreviewUrl } from '../../lib/appwrite';
+import { databases, DB_ID, COLLECTIONS, Query } from '../../lib/appwrite';
 import { publicLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
@@ -12,9 +12,7 @@ router.get('/', publicLimiter, async (req: Request, res: Response, next: NextFun
       Query.limit(100),
     ];
 
-    if (req.query.category === '3d') {
-      queries.push(Query.equal('category', '3D Printing'));
-    }
+
 
     const result = await databases.listDocuments(DB_ID, COLLECTIONS.projects, queries);
 
@@ -25,7 +23,7 @@ router.get('/', publicLimiter, async (req: Request, res: Response, next: NextFun
         title: doc.title,
         description: doc.description,
         category: doc.category,
-        imageUrl: doc.thumbnailUrl || (doc.thumbnailFileId ? getFilePreviewUrl(doc.thumbnailFileId, 800, 600) : null),
+        imageUrl: doc.image_url || null,
         imageId: doc.thumbnailFileId,
         createdAt: doc.$createdAt,
       })),
@@ -44,7 +42,7 @@ router.get('/:id', publicLimiter, async (req: Request, res: Response, next: Next
       title: doc.title,
       description: doc.description,
       category: doc.category,
-      imageUrl: doc.thumbnailUrl || (doc.thumbnailFileId ? getFilePreviewUrl(doc.thumbnailFileId, 1200, 900) : null),
+      imageUrl: doc.image_url || null,
       imageId: doc.thumbnailFileId,
       createdAt: doc.$createdAt,
     });

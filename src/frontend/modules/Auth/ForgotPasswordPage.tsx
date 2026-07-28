@@ -42,6 +42,7 @@ export default function ForgotPasswordPage() {
             src="/assets/logo-new.png"
             alt="Evansh Logo"
             fill
+            sizes="32px"
             className="object-contain"
           />
         </div>
@@ -75,6 +76,7 @@ export default function ForgotPasswordPage() {
                 src="/assets/Log_Image.jpeg"
                 alt="Learning Illustration"
                 fill
+                sizes="(max-width: 768px) 300px, 500px"
                 className="object-contain transform hover:scale-105 transition-transform duration-700"
                 priority
               />

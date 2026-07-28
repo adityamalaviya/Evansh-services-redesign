@@ -16,7 +16,10 @@ declare global {
 }
 
 export function requestIdMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+  const suppliedId = req.headers['x-request-id'];
+  const requestId = typeof suppliedId === 'string' && /^[a-zA-Z0-9._:-]{1,100}$/.test(suppliedId)
+    ? suppliedId
+    : uuidv4();
   req.requestId = requestId;
   res.setHeader('X-Request-ID', requestId);
   next();

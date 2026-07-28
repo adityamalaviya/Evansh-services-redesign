@@ -13,12 +13,15 @@ import coursesPublicRouter from './routes/public/courses';
 import servicesPublicRouter from './routes/public/services';
 import projectsPublicRouter from './routes/public/projects';
 import contactRouter from './routes/public/contact';
+import enrollmentsRouter from './routes/public/enrollments';
 
 // Admin routes
 import dashboardRouter from './routes/admin/dashboard';
 import coursesAdminRouter from './routes/admin/courses';
 import servicesAdminRouter from './routes/admin/services';
 import projectsAdminRouter from './routes/admin/projects';
+import mediaAdminRouter from './routes/admin/media';
+import contactAdminRouter from './routes/admin/contact';
 
 const app = express();
 
@@ -54,12 +57,15 @@ app.use('/api/courses', coursesPublicRouter);
 app.use('/api/services', servicesPublicRouter);
 app.use('/api/projects', projectsPublicRouter);
 app.use('/api/contact', contactRouter);
+app.use('/api/enrollments', enrollmentsRouter);
 
 // ── Admin routes (all require auth + admin check) ─────────────────────────────
 app.use('/api/admin', dashboardRouter);
 app.use('/api/admin/courses', coursesAdminRouter);
 app.use('/api/admin/services', servicesAdminRouter);
 app.use('/api/admin/projects', projectsAdminRouter);
+app.use('/api/admin/media', mediaAdminRouter);
+app.use('/api/admin/contact', contactAdminRouter);
 
 // ── 404 + Error handlers (must be last) ──────────────────────────────────────
 app.use(notFoundHandler);

@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full scroll-smooth antialiased ${plusJakartaSans.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`h-full scroll-smooth antialiased ${plusJakartaSans.variable}`}>
       <body className={`${plusJakartaSans.className} min-h-full bg-[#F8FAFC] text-[#1E293B] overflow-x-hidden antialiased`}>
         <AuthProvider>
           {children}

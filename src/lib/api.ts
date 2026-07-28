@@ -81,12 +81,31 @@ async function requestForm<T>(path: string, formData: FormData, method = 'POST')
     }));
     throw Object.assign(new Error(err.error.message), {
       code: err.error.code,
+      fields: err.error.fields,
       status: res.status,
     });
   }
 
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+export function formatApiError(err: any, fallback: string): string {
+  if (err?.status === 401) {
+    return "Session expired. Please log in again.";
+  }
+  if (!err?.status) {
+    // Network failure (fetch threw without HTTP status response)
+    return fallback;
+  }
+  const fields = err?.fields as Record<string, string[]> | undefined;
+  if (fields) {
+    const details = Object.entries(fields)
+      .flatMap(([field, messages]) => messages.map((message) => `${field}: ${message}`))
+      .join("; ");
+    if (details) return `${err?.message || fallback} (${details})`;
+  }
+  return err?.message ? `${err.message} (status ${err.status})` : `Something went wrong (status ${err.status}).`;
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
@@ -99,10 +118,8 @@ export const api = {
   getServices: () => request<{ total: number; services: any[] }>('/api/services'),
 
   // Projects
-  getProjects: (category?: '3d') =>
-    request<{ total: number; projects: any[] }>(
-      `/api/projects${category ? `?category=${category}` : ''}`
-    ),
+  getProjects: () =>
+    request<{ total: number; projects: any[] }>('/api/projects'),
 
   // Contact
   submitContact: (data: {
@@ -114,6 +131,12 @@ export const api = {
   }) => request<{ success: boolean; message: string }>('/api/contact', {
     method: 'POST',
     body: JSON.stringify(data),
+  }),
+  submitEnrollment: (data: {
+    id: string; full_name: string; email: string; phone_number: string; age: number;
+    city: string; qualification: string; prior_experience: 'beginner' | 'intermediate' | 'advanced'; additional_message?: string;
+  }) => request<{ success: boolean; message: string }>('/api/enrollments', {
+    method: 'POST', body: JSON.stringify(data),
   }),
 
   // Admin — Dashboard
@@ -140,14 +163,35 @@ export const api = {
     request<void>(`/api/admin/services/${id}`, { method: 'DELETE' }),
 
   // Admin — Projects (multipart for file uploads)
-  adminGetProjects: (category?: '3d') =>
-    request<{ total: number; projects: any[] }>(
-      `/api/admin/projects${category ? `?category=${category}` : ''}`
-    ),
+  adminGetProjects: () =>
+    request<{ total: number; projects: any[] }>('/api/admin/projects'),
   adminGetProject: (id: string) => request<any>(`/api/admin/projects/${id}`),
   adminCreateProject: (formData: FormData) => requestForm<any>('/api/admin/projects', formData),
   adminUpdateProject: (id: string, formData: FormData) =>
     requestForm<any>(`/api/admin/projects/${id}`, formData, 'PUT'),
   adminDeleteProject: (id: string) =>
     request<void>(`/api/admin/projects/${id}`, { method: 'DELETE' }),
+
+  // Admin — Contact Messages
+  adminGetContacts: () =>
+    request<{ total: number; messages: any[] }>('/api/admin/contact'),
+  adminDeleteContact: (id: string) =>
+    request<void>(`/api/admin/contact/${id}`, { method: 'DELETE' }),
+
+  adminUploadImage: (entity: 'courses' | 'portfolio' | 'services', file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return requestForm<{ file_id: string; image_url: string }>(`/api/admin/media/${entity}/upload-image`, form);
+  },
+  adminUpdateImage: (entity: 'courses' | 'portfolio' | 'services', file: File, oldFileId?: string) => {
+    const form = new FormData();
+    form.append('file', file);
+    if (oldFileId) form.append('old_file_id', oldFileId);
+    return requestForm<{ file_id: string; image_url: string }>(`/api/admin/media/${entity}/update-image`, form, 'PUT');
+  },
+  adminDeleteImage: (entity: 'courses' | 'portfolio' | 'services', fileId: string) => {
+    const form = new FormData();
+    form.append('file_id', fileId);
+    return requestForm<{ deleted: boolean }>(`/api/admin/media/${entity}/delete-image`, form, 'DELETE');
+  },
 };

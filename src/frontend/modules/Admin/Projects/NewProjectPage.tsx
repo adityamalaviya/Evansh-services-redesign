@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { api } from "@/lib/api";
-import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
+import { api, formatApiError } from "@/lib/api";
 import {
   ArrowLeft,
   UploadSimple,
@@ -14,7 +13,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
-const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "3D Printing"];
+const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals"];
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -57,30 +56,17 @@ export default function NewProjectPage() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("category", category);
-      let imageId = "";
-
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
       await api.adminCreateProject(formData);
-      await databases.createDocument(DB_ID, PROJECTS_COLLECTION_ID, ID.unique(), {
-        title,
-        description,
-        category,
-        imageId,
-        order: Date.now(),
-      });
 
-      if (category === "3D Printing") {
-        router.push("/admin/projects/3d-printing");
-      } else {
-        router.push("/admin/projects");
-      }
+      router.push("/admin/projects");
       router.refresh();
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("Creation error:", err);
-      setError(err instanceof Error ? err.message : "Something went wrong while saving the project.");
+      setError(formatApiError(err, "Something went wrong while saving the project."));
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +77,7 @@ export default function NewProjectPage() {
       {/* Breadcrumbs */}
       <div className="flex items-center gap-4">
         <Link
-          href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
+          href="/admin/projects"
           className="p-2.5 text-slate-500 hover:text-[#14B8A6] bg-white border border-slate-200 rounded-xl transition-all hover:border-teal-200"
         >
           <ArrowLeft size={18} weight="bold" />
@@ -107,9 +93,19 @@ export default function NewProjectPage() {
 
           {/* Error Alert */}
           {error && (
-            <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
-              <WarningCircle size={20} className="flex-shrink-0 mt-0.5" />
-              {error}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
+              <div className="flex items-center gap-3">
+                <WarningCircle size={20} className="flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+              {error.includes("Session expired") && (
+                <Link
+                  href="/admin/login"
+                  className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 self-start sm:self-auto"
+                >
+                  Log In
+                </Link>
+              )}
             </div>
           )}
 
@@ -128,23 +124,18 @@ export default function NewProjectPage() {
                 />
               </div>
 
-              {category !== "3D Printing" && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                </>
-              )}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
+                >
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Right: Image Upload */}
@@ -230,7 +221,7 @@ export default function NewProjectPage() {
               )}
             </button>
             <Link
-              href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
+              href="/admin/projects"
               className="w-full sm:w-auto text-slate-400 hover:text-slate-600 font-bold px-8 py-4 transition-colors text-center"
             >
               Cancel

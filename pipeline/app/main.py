@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.slug import router as slug_router
 from app.routes.validate import router as validate_router
+from app.routes.media import router as media_router
 
 
 @asynccontextmanager
@@ -34,3 +35,4 @@ async def health():
 # ── Routes ────────────────────────────────────────────────────────────────────
 app.include_router(slug_router, prefix="/pipeline", tags=["pipeline"])
 app.include_router(validate_router, prefix="/pipeline", tags=["pipeline"])
+app.include_router(media_router, prefix="/media", tags=["media"])

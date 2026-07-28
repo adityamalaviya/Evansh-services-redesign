@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { api } from "@/lib/api";
-import { databases, storage, DB_ID, PROJECTS_COLLECTION_ID, BUCKET_ID, ID } from "@backend/services/appwrite";
+import { api, formatApiError } from "@/lib/api";
 import {
   ArrowLeft,
   UploadSimple,
@@ -14,7 +13,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
-const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "3D Printing", "Other Projects"];
+const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals", "Printing", "Other Projects"];
 
 export default function EditProjectPage() {
   const router = useRouter();
@@ -45,12 +44,9 @@ export default function EditProjectPage() {
 
       if (doc.imageUrl) {
         setImagePreview(doc.imageUrl);
-      if (doc.imageId) {
-        const preview: any = storage.getFilePreview(BUCKET_ID, doc.imageId);
-        setImagePreview(preview.toString());
       }
-    } catch (err: unknown) {
-      setError("Project not found or connection error.");
+    } catch (err: any) {
+      setError(formatApiError(err, "Project not found or connection error."));
     } finally {
       setIsLoading(false);
     }
@@ -91,32 +87,11 @@ export default function EditProjectPage() {
       }
 
       await api.adminUpdateProject(projectId, formData);
-      let finalImageId = currentImageId;
 
-      if (imageFile) {
-        if (currentImageId) {
-          try { await storage.deleteFile(BUCKET_ID, currentImageId); } catch (e) {}
-        }
-        const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), imageFile);
-        finalImageId = uploadedFile.$id;
-      }
-
-      await databases.updateDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId, {
-        title,
-        description,
-        category,
-        imageId: finalImageId,
-        order: category === "3D Printing" ? (order || Date.now()) : Number(order),
-      });
-
-      if (category === "3D Printing") {
-        router.push("/admin/projects/3d-printing");
-      } else {
-        router.push("/admin/projects");
-      }
+      router.push("/admin/projects");
       router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to update project.");
+    } catch (err: any) {
+      setError(formatApiError(err, "Failed to update project."));
     } finally {
       setIsSubmitting(false);
     }
@@ -128,17 +103,7 @@ export default function EditProjectPage() {
     try {
       // BFF handles storage file deletion server-side
       await api.adminDeleteProject(projectId);
-      if (category === "3D Printing") {
-        router.push("/admin/projects/3d-printing");
-      } else {
-        router.push("/admin/projects");
-      }
-      await databases.deleteDocument(DB_ID, PROJECTS_COLLECTION_ID, projectId);
-      if (category === "3D Printing") {
-        router.push("/admin/projects/3d-printing");
-      } else {
-        router.push("/admin/projects");
-      }
+      router.push("/admin/projects");
       router.refresh();
     } catch (err) {
       setError("Failed to delete project.");
@@ -159,7 +124,7 @@ export default function EditProjectPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            href={category === "3D Printing" ? "/admin/projects/3d-printing" : "/admin/projects"}
+            href="/admin/projects"
             className="p-2.5 text-slate-500 hover:text-[#14B8A6] bg-white border border-slate-200 rounded-xl transition-all hover:border-teal-200"
           >
             <ArrowLeft size={18} weight="bold" />
@@ -185,9 +150,19 @@ export default function EditProjectPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-8 shadow-sm">
           {error && (
-            <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
-              <WarningCircle size={20} className="flex-shrink-0 mt-0.5" />
-              {error}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
+              <div className="flex items-center gap-3">
+                <WarningCircle size={20} className="flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+              {error.includes("Session expired") && (
+                <Link
+                  href="/admin/login"
+                  className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 self-start sm:self-auto"
+                >
+                  Log In
+                </Link>
+              )}
             </div>
           )}
 
@@ -202,29 +177,25 @@ export default function EditProjectPage() {
                   className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
                 />
               </div>
-              {category !== "3D Printing" && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
-                    >
-                      {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Display Order</label>
-                    <input
-                      type="number"
-                      value={order}
-                      onChange={(e) => setOrder(parseInt(e.target.value))}
-                      className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
-                    />
-                  </div>
-                </>
-              )}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all appearance-none"
+                >
+                  {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Display Order</label>
+                <input
+                  type="number"
+                  value={order}
+                  onChange={(e) => setOrder(parseInt(e.target.value))}
+                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

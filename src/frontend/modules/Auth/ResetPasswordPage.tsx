@@ -61,7 +61,7 @@ function ResetPasswordForm() {
       {/* Global Logo Branding */}
       <div className="absolute top-6 left-6 md:top-8 md:left-8 lg:top-10 lg:left-10 flex items-center gap-2 md:gap-3 z-30">
         <div className="w-7 h-7 md:w-8 md:h-8 relative">
-          <Image src="/assets/logo-new.png" alt="Evansh Logo" fill className="object-contain" />
+          <Image src="/assets/logo-new.png" alt="Evansh Logo" fill sizes="32px" className="object-contain" />
         </div>
         <span className="text-base md:text-lg font-bold text-slate-800 tracking-tight">Evansh Services</span>
       </div>
@@ -90,6 +90,7 @@ function ResetPasswordForm() {
                 src="/assets/Log_Image.jpeg"
                 alt="Learning Illustration"
                 fill
+                sizes="(max-width: 768px) 300px, 500px"
                 className="object-contain transform hover:scale-105 transition-transform duration-700"
                 priority
               />

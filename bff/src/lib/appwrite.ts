@@ -27,6 +27,7 @@ export const COLLECTIONS = {
   courses: 'courses',
   services: 'services',
   contactMessages: 'contactmessages',
+  enrollments: 'enrollments24651',
   projects: 'project1234',
   portfolio: 'portfolio',
   portfolioImages: 'portfolioimages',
@@ -37,7 +38,6 @@ export const COLLECTIONS = {
 } as const;
 
 // ── Helper: create a user-scoped Appwrite client from a session ─────────────
-// Used in auth middleware to verify session cookies
 export function createSessionClient(sessionCookie: string) {
   const sessionClient = new Client()
     .setEndpoint(config.appwrite.endpoint)
@@ -46,15 +46,6 @@ export function createSessionClient(sessionCookie: string) {
   return {
     account: new Account(sessionClient),
   };
-}
-
-// ── Storage URL helper ───────────────────────────────────────────────────────
-export function getFileUrl(fileId: string): string {
-  return `${config.appwrite.endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${config.appwrite.projectId}`;
-}
-
-export function getFilePreviewUrl(fileId: string, width = 800, height = 600): string {
-  return `${config.appwrite.endpoint}/storage/buckets/${BUCKET_ID}/files/${fileId}/preview?width=${width}&height=${height}&project=${config.appwrite.projectId}`;
 }
 
 // ── Type re-exports ──────────────────────────────────────────────────────────

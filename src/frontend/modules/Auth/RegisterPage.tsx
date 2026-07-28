@@ -41,7 +41,7 @@ export default function RegisterPage() {
     <div className="relative min-h-screen w-full bg-[#f8fafb] flex items-center justify-center p-4 font-sans">
       <div className="absolute top-6 left-6 flex items-center gap-2 z-30">
         <div className="w-7 h-7 relative">
-          <Image src="/assets/logo-new.png" alt="Logo" fill className="object-contain" />
+          <Image src="/assets/logo-new.png" alt="Logo" fill sizes="32px" className="object-contain" />
         </div>
         <span className="text-base font-bold text-slate-800">Evansh Services</span>
       </div>

@@ -2,10 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
-import { databases, DB_ID, SERVICES_COLLECTION_ID } from "@backend/services/appwrite";
-import { Query, Models } from "appwrite";
 import {
   Plus,
   PencilSimple,
@@ -26,14 +24,6 @@ type ServiceDocument = {
 
 export default function AdminServicesPage() {
   const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
-type ServiceDocument = Models.Document & {
-  title: string;
-  subtitle: string;
-  description: string;
-  image: string;
-};
-
-export default function AdminServicesPage() {
   const [services, setServices] = useState<ServiceDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -46,15 +36,8 @@ export default function AdminServicesPage() {
     try {
       const res = await api.adminGetServices();
       setServices(res.services);
-    } catch {
-      setError("Could not load services. Please check your BFF connection.");
-      const res = await databases.listDocuments(DB_ID, SERVICES_COLLECTION_ID, [
-        Query.orderAsc("order"),
-        Query.limit(100),
-      ]);
-      setServices(res.documents as unknown as ServiceDocument[]);
-    } catch {
-      setError("Could not load services. Please check your Appwrite database setup.");
+    } catch (err: any) {
+      setError(formatApiError(err, "Could not load services. Please check your BFF connection."));
     } finally {
       setIsLoading(false);
     }
@@ -65,15 +48,12 @@ export default function AdminServicesPage() {
     if (isAuthLoading || !isLoggedIn) return;
     fetchServices();
   }, [fetchServices, isAuthLoading, isLoggedIn]);
-    fetchServices();
-  }, [fetchServices]);
 
   const handleDelete = async (service: ServiceDocument) => {
     if (!confirm(`Are you sure you want to delete "${service.title}"?`)) return;
     setDeletingId(service.$id);
     try {
       await api.adminDeleteService(service.$id);
-      await databases.deleteDocument(DB_ID, SERVICES_COLLECTION_ID, service.$id);
       setServices((prev) => prev.filter((s) => s.$id !== service.$id));
     } catch {
       alert("Failed to delete service. Please try again.");
@@ -129,9 +109,19 @@ export default function AdminServicesPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
-          <Warning size={20} className="flex-shrink-0 mt-0.5" />
-          {error}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
+          <div className="flex items-center gap-3">
+            <Warning size={20} className="flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          {error.includes("Session expired") && (
+            <Link
+              href="/admin/login"
+              className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 self-start sm:self-auto"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       )}
 

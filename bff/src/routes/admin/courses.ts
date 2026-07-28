@@ -16,6 +16,8 @@ const courseSchema = z.object({
   slug: z.string().min(2).max(200).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase with hyphens only'),
   cardImageUrl: z.string().url().optional().or(z.literal('')),
   heroImageUrl: z.string().url().optional().or(z.literal('')),
+  cardImageFileId: z.string().max(255).optional().or(z.literal('')),
+  heroImageFileId: z.string().max(255).optional().or(z.literal('')),
   feature1Title: z.string().max(100).default(''),
   feature1Subtitle: z.string().max(200).default(''),
   feature2Title: z.string().max(100).default(''),

@@ -13,6 +13,15 @@ import {
 } from "@phosphor-icons/react";
 import { Header, Footer } from "@frontend/components";
 import { tokens } from "@frontend/styles/tokens";
+import TeamMemberCard from "./Components/TeamMemberCard";
+
+const teamMembers = [
+  { name: "Daksh Ahir", role: "Frontend Developer" },
+  { name: "Ruturaj Patel", role: "Backend Developer" },
+  { name: "Meet Gajjar", role: "UI/UX Designer" },
+  { name: "Krupal Shah", role: "Content Creator" },
+  { name: "Heena Solanki", role: "Digital Marketer" }
+];
 
 const AboutPage = () => {
   return (
@@ -39,7 +48,7 @@ const AboutPage = () => {
                   href="/courses"
                   className="group w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-[#1E293B] text-white px-8 md:px-10 py-4 rounded-xl md:rounded-2xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-200"
                 >
-                  Our Courses <ArrowRight size={20} weight="bold" className="group-hover:translate-x-2 transition-transform" />
+                  Our Internships <ArrowRight size={20} weight="bold" className="group-hover:translate-x-2 transition-transform" />
                 </Link>
               </div>
               <div className="relative mt-8 lg:mt-0">
@@ -149,23 +158,40 @@ const AboutPage = () => {
               <div className="w-16 h-1 bg-[#14B8A6] rounded-full mx-auto"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto px-4 md:px-0">
-              <div className="bg-white p-6 md:p-8 rounded-[32px] md:rounded-[40px] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 md:gap-8 hover:shadow-xl transition-all hover:scale-[1.02]">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#14B8A6] flex-shrink-0 border-4 border-teal-50"></div>
-                <div>
-                  <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-2">Honey R. Gurnani</h3>
-                  <p className="text-[#14B8A6] font-bold text-xs md:text-sm mb-3 md:mb-4 uppercase tracking-wider">AI/ML Teacher</p>
-                  <p className="text-slate-500 font-bold text-xs md:text-sm">18+ Years Experience</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 md:p-8 rounded-[32px] md:rounded-[40px] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 md:gap-8 hover:shadow-xl transition-all hover:scale-[1.02]">
+            <div className="flex justify-center max-w-5xl mx-auto px-4 md:px-0">
+              <div className="bg-white p-6 md:p-8 rounded-[32px] md:rounded-[40px] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 md:gap-8 hover:shadow-xl transition-all hover:scale-[1.02] max-w-xl w-full">
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#14B8A6] flex-shrink-0 border-4 border-teal-50"></div>
                 <div>
                   <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-2">Vimal Vaniya</h3>
-                  <p className="text-[#14B8A6] font-bold text-xs md:text-sm mb-3 md:mb-4 uppercase tracking-wider">DSA Teacher</p>
-                  <p className="text-slate-500 font-bold text-xs md:text-sm">15+ Years Experience</p>
+                  <p className="text-slate-500 font-bold text-xs md:text-sm">15+ Years of Teaching & Development Experience</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Our Team */}
+        <section className="pb-16 md:pb-24 px-4 md:px-0">
+          <div className={tokens.spacing.container}>
+            <div className="bg-teal-50/20 p-8 md:p-12 rounded-[32px] md:rounded-[48px] border border-teal-100/30">
+              <div className="text-center mb-10 md:mb-12">
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">
+                  Our Team
+                </h2>
+                <div className="w-12 h-1 bg-[#14B8A6] rounded-full mx-auto mb-4"></div>
+                <p className="text-slate-500 font-semibold text-sm md:text-base max-w-lg mx-auto leading-relaxed">
+                  Meet the passionate individuals who work together to deliver the best learning experience.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                {teamMembers.map((member, i) => (
+                  <TeamMemberCard
+                    key={i}
+                    name={member.name}
+                    role={member.role}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -200,7 +226,7 @@ const AboutPage = () => {
                   href="/courses"
                   className="group w-full lg:w-auto bg-[#1E293B] text-white px-8 md:px-10 py-5 rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl shadow-slate-400/20"
                 >
-                  Explore Courses <ArrowRight size={20} weight="bold" className="group-hover:translate-x-2 transition-transform" />
+                  Explore Internships <ArrowRight size={20} weight="bold" className="group-hover:translate-x-2 transition-transform" />
                 </Link>
               </div>
             </div>

@@ -9,6 +9,7 @@ interface AuthContextType {
   user: Models.User<Models.Preferences> | null;
   login: (email: string, pass: string) => Promise<void>;
   loginWithGoogle: () => void;
+  loginWithOAuth: (provider: OAuthProvider) => void;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -51,13 +52,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = () => {
-    // Appwrite Google OAuth
-    // The redirect URL should be your app's base URL
+    loginWithOAuth(OAuthProvider.Google);
+  };
+
+  const loginWithOAuth = (provider: OAuthProvider) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     account.createOAuth2Session(
-      OAuthProvider.Google,
-      `${origin}/`, // Success redirect
-      `${origin}/login` // Failure redirect
+      provider,
+      `${origin}/auth/oauth-callback`,
+      `${origin}/login?oauth_error=1`
     );
   };
 
@@ -68,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, loginWithGoogle, logout, isLoading }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, loginWithGoogle, loginWithOAuth, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

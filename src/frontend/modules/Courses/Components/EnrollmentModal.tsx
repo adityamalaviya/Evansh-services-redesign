@@ -13,11 +13,13 @@ import {
   CheckCircle,
   Spinner,
 } from "@phosphor-icons/react";
+import { api } from "@/lib/api";
 
 interface EnrollmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   course: {
+    id: string | number;
     title: string;
     color: string;
   } | null;
@@ -55,6 +57,7 @@ const EnrollmentModal: React.FC<EnrollmentModalProps> = ({
   const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
+  const [submitError, setSubmitError] = useState("Something went wrong. Please try again.");
   const [errors, setErrors] = useState<Partial<FormData>>({});
 
   useEffect(() => {
@@ -66,6 +69,7 @@ const EnrollmentModal: React.FC<EnrollmentModalProps> = ({
       document.body.style.overflow = "hidden";
       setFormData(initialFormData);
       setSubmitStatus("idle");
+      setSubmitError("Something went wrong. Please try again.");
       setErrors({});
     } else {
       document.body.style.overflow = "unset";
@@ -108,11 +112,17 @@ const EnrollmentModal: React.FC<EnrollmentModalProps> = ({
 
     setSubmitStatus("loading");
 
-    // Simulate API call (replace with actual Appwrite/email action)
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      try {
+      await api.submitEnrollment({
+        id: String(course.id), full_name: formData.fullName.trim(), email: formData.email.trim(),
+        phone_number: formData.phone.trim(), age: Number(formData.age), city: formData.city.trim(),
+        qualification: formData.qualification.trim(), prior_experience: formData.experience as 'beginner' | 'intermediate' | 'advanced',
+        additional_message: formData.message.trim(),
+      });
       setSubmitStatus("success");
-    } catch {
+    } catch (error: any) {
+      console.error("Enrollment submission failed:", error);
+      setSubmitError(error?.message || "Something went wrong. Please try again.");
       setSubmitStatus("error");
     }
   };
@@ -151,7 +161,7 @@ const EnrollmentModal: React.FC<EnrollmentModalProps> = ({
               className="text-xs font-bold uppercase tracking-[0.2em] mb-1"
               style={{ color: colorHex }}
             >
-              {course.title === "Start Your Journey" ? "Project Inquiry" : "Course Enrollment"}
+              {course.title === "Start Your Journey" ? "Project Inquiry" : "Internship Enrollment"}
             </p>
             <h2
               id="enrollment-modal-title"
@@ -440,7 +450,7 @@ const EnrollmentModal: React.FC<EnrollmentModalProps> = ({
               {/* Error Banner */}
               {submitStatus === "error" && (
                 <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-bold px-4 py-3 rounded-xl">
-                  Something went wrong. Please try again.
+                  {submitError}
                 </div>
               )}
 
