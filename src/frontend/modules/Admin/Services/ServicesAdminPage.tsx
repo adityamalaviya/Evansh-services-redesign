@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -11,6 +11,7 @@ export default function ServicesAdminPage() {
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [image, setImage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,11 +23,13 @@ export default function ServicesAdminPage() {
     setSuccess(false);
 
     try {
+      const uploaded = imageFile ? await api.adminUploadImage("services", imageFile) : null;
       await api.adminCreateService({
         title,
         slug: title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         description: subtitle,
-        image,
+        image: uploaded?.image_url || image,
+        imageFileId: uploaded?.file_id || "",
         display_order: 0,
         active: true,
       });
@@ -35,9 +38,10 @@ export default function ServicesAdminPage() {
       setTitle("");
       setSubtitle("");
       setImage("");
+      setImageFile(null);
       setTimeout(() => router.push("/admin/services"), 1200);
     } catch (err: any) {
-      setError(err?.message || "Failed to save service. Please check your BFF connection.");
+      setError(formatApiError(err, "Failed to save service. Please check your BFF connection."));
     } finally {
       setIsSubmitting(false);
     }
@@ -70,9 +74,19 @@ export default function ServicesAdminPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-4 text-sm">
-          <Warning size={20} className="flex-shrink-0 mt-0.5" />
-          {error}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-4 text-sm">
+          <div className="flex items-center gap-3">
+            <Warning size={20} className="flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          {error.includes("Session expired") && (
+            <Link
+              href="/admin/login"
+              className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 self-start sm:self-auto"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       )}
 
@@ -92,12 +106,15 @@ export default function ServicesAdminPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 block">Service Image URL</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 block">Service Image</label>
             <input
-              type="url"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              placeholder="https://... (image shown at top of the service card)"
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file && file.size <= 2 * 1024 * 1024) { setImageFile(file); setImage(URL.createObjectURL(file)); }
+                else if (file) setError("Image must be JPG or PNG and 2MB or smaller.");
+              }}
               className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
             />
             {image && (

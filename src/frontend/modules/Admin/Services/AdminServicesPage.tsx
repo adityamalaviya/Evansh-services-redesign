@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import {
   Plus,
@@ -36,8 +36,8 @@ export default function AdminServicesPage() {
     try {
       const res = await api.adminGetServices();
       setServices(res.services);
-    } catch {
-      setError("Could not load services. Please check your BFF connection.");
+    } catch (err: any) {
+      setError(formatApiError(err, "Could not load services. Please check your BFF connection."));
     } finally {
       setIsLoading(false);
     }
@@ -109,9 +109,19 @@ export default function AdminServicesPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
-          <Warning size={20} className="flex-shrink-0 mt-0.5" />
-          {error}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
+          <div className="flex items-center gap-3">
+            <Warning size={20} className="flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          {error.includes("Session expired") && (
+            <Link
+              href="/admin/login"
+              className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 self-start sm:self-auto"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       )}
 

@@ -16,12 +16,17 @@ import {
 
 interface Stats {
   totalProjects: number;
-  threeDProjects: number;
+  totalCourses: number;
+  totalServices: number;
 }
 
 export default function AdminDashboard() {
   const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
-  const [stats, setStats] = useState<Stats>({ totalProjects: 0, threeDProjects: 0 });
+  const [stats, setStats] = useState<Stats>({
+    totalProjects: 0,
+    totalCourses: 0,
+    totalServices: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +39,8 @@ export default function AdminDashboard() {
         const res = await api.getAdminStats();
         setStats({
           totalProjects: res.totalProjects || 0,
-          threeDProjects: res.threeDProjects || 0,
+          totalCourses: res.totalCourses || 0,
+          totalServices: res.totalServices || 0,
         });
       } catch {
         // BFF may be down or unauthenticated — dashboard still renders with zeros
@@ -55,18 +61,10 @@ export default function AdminDashboard() {
       border: "border-teal-100",
       href: "/admin/projects",
     },
+
     {
-      label: "3D Printing Projects",
-      value: isLoading ? "..." : stats.threeDProjects,
-      icon: <Cube size={26} weight="duotone" />,
-      color: "text-purple-500",
-      bg: "bg-purple-50",
-      border: "border-purple-100",
-      href: "/admin/projects/3d-printing",
-    },
-    {
-      label: "Courses",
-      value: "6",
+      label: "Internships",
+      value: isLoading ? "..." : stats.totalCourses,
       icon: <GraduationCap size={26} weight="duotone" />,
       color: "text-blue-500",
       bg: "bg-blue-50",
@@ -75,7 +73,7 @@ export default function AdminDashboard() {
     },
     {
       label: "Services",
-      value: "12",
+      value: isLoading ? "..." : stats.totalServices,
       icon: <Briefcase size={26} weight="duotone" />,
       color: "text-orange-500",
       bg: "bg-orange-50",

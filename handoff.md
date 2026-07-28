@@ -12,6 +12,67 @@ Evansh Services is a web application composed of:
 
 The current work is limited to build, dependency, wiring, testing, configuration, and credential-hygiene fixes. UI pages, components, styles, copy, routes, and API response shapes must not be changed without an explicit product decision.
 
+## Current implementation status — 2026-07-16
+
+The following features are now implemented and should be treated as the current state of the project:
+
+### Image uploads and Appwrite storage
+
+- Admin course and service forms use local JPG/PNG file uploads with a 2MB limit.
+- Project uploads use the existing multipart picker.
+- BFF media routes are mounted at `/api/admin/media` and proxy to FastAPI media routes.
+- Uploaded files receive public read permission and generated Appwrite view URLs.
+- URL/file-ID mappings:
+  - `courses.cardImageUrl` + `courses.cardImageFileId`
+  - `courses.heroImageUrl` + `courses.heroImageFileId`
+  - `services.ImageUrl` + `services.imageFileId`
+  - `project1234.image_url` + `project1234.thumbnailFileId`
+- The public projects API reads the live `image_url` field.
+- `bff/scripts/sync-image-urls.js` synchronizes URLs for records that already have file IDs.
+- Existing Appwrite files must have `Read: Any` permission to display publicly.
+
+### Enrollment flow
+
+- `POST /api/enrollments` writes public enrollment submissions to the `enrollments` collection.
+- The selected course Appwrite document ID is stored in the `id` attribute; no `course_id` field is used.
+- Enrollment data includes `full_name`, `email`, `phone_number`, `age`, `city`, `qualification`, `prior_experience`, `additional_message`, `status`, and `created_at`.
+- Duplicate enrollment attempts are rejected by course ID and email.
+- Resend sends a confirmation email to the enrolled user when `RESEND_API_KEY` is configured.
+- The Appwrite `enrollments` collection must exist with the matching attributes and permissions before submissions can succeed.
+
+### Authentication
+
+- Appwrite OAuth support exists for Google, GitHub, and Facebook.
+- OAuth callback route: `/auth/oauth-callback`.
+- Existing Appwrite password recovery uses `/forgot-password` and `/reset-password`.
+- Existing email/password login remains unchanged.
+
+### Current runtime setup
+
+- Docker runs the BFF and FastAPI pipeline services.
+- Next.js runs locally in a separate terminal.
+- FastAPI is exposed on host port `8000` for local BFF development.
+- Local startup:
+
+```cmd
+cd /d D:\Evansh_Project
+docker compose up -d --build pipeline bff
+npm run dev:next
+```
+
+- Docker-only backend endpoints:
+  - FastAPI: `http://localhost:8000`
+  - BFF: `http://localhost:3001`
+  - Next.js: `http://localhost:3000`
+
+### Important configuration notes
+
+- Host-run BFF uses `NEXT_PUBLIC_PIPELINE_URL=http://localhost:8000`.
+- Docker-run BFF uses `PIPELINE_URL=http://pipeline:8000` from Compose.
+- `docker-compose.yml` passes `bff/.env` to the pipeline so FastAPI can access Appwrite configuration.
+- `pipeline/requirements.txt` uses Appwrite SDK `11.0.0` for Python 3.12 compatibility.
+- Rotate any exposed Appwrite API key before production use.
+
 ## Goal
 
 Make the project buildable, correctly configured, testable, and safer to operate while preserving the existing UI and public behavior.

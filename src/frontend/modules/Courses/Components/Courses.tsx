@@ -138,7 +138,7 @@ const CourseCard: React.FC<{ course: Course; onClick: (course: Course) => void }
           borderColor: `${course.color}40`
         }}
       >
-        Explore Course <ArrowRight size={18} weight="bold" />
+        Explore Internship <ArrowRight size={18} weight="bold" />
       </button>
     </div>
   </div>
@@ -238,6 +238,7 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
   // Build modal data from the selected course
   const modalData: CourseModalData | null = selectedCourse
     ? {
+        id: selectedCourse.id,
         title: selectedCourse.title,
         description: selectedCourse.description,
         color: selectedCourse.color,
@@ -268,10 +269,10 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
         <div className={`${tokens.spacing.container} text-center mb-16 md:mb-20`}>
           <div className="max-w-2xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
-              explore our courses
+              explore our internships
             </h2>
             <p className="text-slate-500 text-base md:text-lg leading-relaxed font-medium px-4">
-              our courses are designed to help you gain practical skills, build real-world
+              our internships are designed to help you gain practical skills, build real-world
               projects and grow your career in the tech industry.
             </p>
           </div>

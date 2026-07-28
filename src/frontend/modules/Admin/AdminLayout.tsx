@@ -12,6 +12,8 @@ import {
   X,
   GraduationCap,
   Briefcase,
+  House,
+  Envelope,
 } from "@phosphor-icons/react";
 import { useAuth } from "@backend/contexts/AuthContext";
 import { isAdmin } from "@backend/guards/adminGuard";
@@ -20,8 +22,9 @@ import { ConfirmModal } from "@frontend/components";
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: <SquaresFour size={20} weight="duotone" /> },
   { label: "All Projects", href: "/admin/projects", icon: <Images size={20} weight="duotone" /> },
-  { label: "Courses", href: "/admin/courses", icon: <GraduationCap size={20} weight="duotone" /> },
+  { label: "Internships", href: "/admin/courses", icon: <GraduationCap size={20} weight="duotone" /> },
   { label: "Services", href: "/admin/services", icon: <Briefcase size={20} weight="duotone" /> },
+  { label: "Messages", href: "/admin/messages", icon: <Envelope size={20} weight="duotone" /> },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -115,8 +118,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-slate-100">
+        {/* Back to Home + Logout */}
+        <div className="p-4 border-t border-slate-100 space-y-1">
+          <Link
+            href="/"
+            onClick={() => setSidebarOpen(false)}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:text-[#1E1E24] hover:bg-slate-100 transition-all"
+          >
+            <House size={20} />
+            Back to Home
+          </Link>
           <button
             onClick={() => setIsLogoutModalOpen(true)}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all"

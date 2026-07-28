@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import {
   Plus,
@@ -35,8 +35,8 @@ export default function AdminCoursesPage() {
     try {
       const res = await api.adminGetCourses();
       setCourses(res.courses);
-    } catch {
-      setError("Could not load courses. Please check your BFF connection.");
+    } catch (err: any) {
+      setError(formatApiError(err, "Could not load internships. Please check your BFF connection."));
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +55,7 @@ export default function AdminCoursesPage() {
       await api.adminDeleteCourse(course.$id);
       setCourses((prev) => prev.filter((c) => c.$id !== course.$id));
     } catch {
-      alert("Failed to delete course. Please try again.");
+      alert("Failed to delete internship. Please try again.");
     } finally {
       setDeletingId(null);
     }
@@ -71,8 +71,8 @@ export default function AdminCoursesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-[#1E1E24]">Manage Courses</h1>
-          <p className="text-slate-500 text-sm mt-1">{courses.length} courses offered to students</p>
+          <h1 className="text-2xl font-black text-[#1E1E24]">Manage Internships</h1>
+          <p className="text-slate-500 text-sm mt-1">{courses.length} internships offered to students</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -85,7 +85,7 @@ export default function AdminCoursesPage() {
             href="/admin/courses/new"
             className="flex items-center gap-2 bg-[#14B8A6] hover:bg-[#0D9488] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 shadow-md shadow-teal-200/60"
           >
-            <Plus size={18} weight="bold" /> Add Course
+            <Plus size={18} weight="bold" /> Add Internship
           </Link>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function AdminCoursesPage() {
           <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search courses by title or description..."
+            placeholder="Search internships by title or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
@@ -106,9 +106,19 @@ export default function AdminCoursesPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
-          <Warning size={20} className="flex-shrink-0 mt-0.5" />
-          {error}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-sm">
+          <div className="flex items-center gap-3">
+            <Warning size={20} className="flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          {error.includes("Session expired") && (
+            <Link
+              href="/admin/login"
+              className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 self-start sm:self-auto"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       )}
 
@@ -120,13 +130,13 @@ export default function AdminCoursesPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-slate-500 text-lg font-semibold mb-2">No courses found</p>
-            <p className="text-slate-400 text-sm mb-6">Add your first course to get started.</p>
+            <p className="text-slate-500 text-lg font-semibold mb-2">No internships found</p>
+            <p className="text-slate-400 text-sm mb-6">Add your first internship to get started.</p>
             <Link
               href="/admin/courses/new"
               className="inline-flex items-center gap-2 bg-[#14B8A6] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#0D9488] transition-all"
             >
-              <Plus size={18} /> Add Course
+              <Plus size={18} /> Add Internship
             </Link>
           </div>
         ) : (
@@ -134,7 +144,7 @@ export default function AdminCoursesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  <th className="text-left text-xs font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Course</th>
+                  <th className="text-left text-xs font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Internship</th>
                   <th className="text-left text-xs font-bold text-slate-400 uppercase tracking-widest px-4 py-4">Theme</th>
                   <th className="text-left text-xs font-bold text-slate-400 uppercase tracking-widest px-4 py-4">Price</th>
                   <th className="text-right text-xs font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Actions</th>

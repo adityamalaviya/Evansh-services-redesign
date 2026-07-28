@@ -13,6 +13,7 @@ import EnrollmentModal from "./EnrollmentModal";
 import { useAuth } from "@backend/contexts/AuthContext";
 
 export interface CourseModalData {
+  id: string | number;
   title: string;
   description: string;
   color: string;
@@ -127,7 +128,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
             <div className="bg-slate-50 p-1.5 md:p-2 rounded-full group-hover:bg-teal-50 transition-colors">
               <ArrowLeft size={16} weight="bold" className="group-hover:-translate-x-1 transition-transform" />
             </div>
-            <span className="text-xs md:text-sm">Back to Courses</span>
+            <span className="text-xs md:text-sm">Back to Internships</span>
           </button>
 
         </div>
@@ -223,7 +224,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
               {/* ✅ About This Course — dynamic from DB */}
               <div>
                 <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-4 md:mb-6 flex flex-col gap-2">
-                  About This Course
+                  About This Internship
                   <div className="w-12 h-1 rounded-full" style={{ backgroundColor: course.color }}></div>
                 </h3>
                 <p className="text-slate-500 font-bold text-xs md:text-sm leading-relaxed">

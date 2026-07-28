@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, Warning, ArrowLeft } from "@phosphor-icons/react";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -19,6 +19,8 @@ interface CourseForm {
   price: string;
   cardImage: string;
   heroImage: string;
+  cardImageFile?: File | null;
+  heroImageFile?: File | null;
   themeColor: string;
   features: Feature[];
   learnPoints: string[];
@@ -101,6 +103,8 @@ export default function CoursesAdminPage() {
     setSuccess(false);
 
     try {
+      const cardUpload = form.cardImageFile ? await api.adminUploadImage("courses", form.cardImageFile) : null;
+      const heroUpload = form.heroImageFile ? await api.adminUploadImage("courses", form.heroImageFile) : null;
       await api.adminCreateCourse({
         title: form.title,
         subtitle: form.subtitle,
@@ -108,8 +112,10 @@ export default function CoursesAdminPage() {
         aboutCourse: form.aboutDescription,
         price: parseInt(form.price) || 0,
         slug: form.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        cardImageUrl: form.cardImage,
-        heroImageUrl: form.heroImage,
+        cardImageUrl: cardUpload?.image_url || form.cardImage,
+        heroImageUrl: heroUpload?.image_url || form.heroImage,
+        cardImageFileId: cardUpload?.file_id || "",
+        heroImageFileId: heroUpload?.file_id || "",
         themeColor: form.themeColor,
         feature1Title: form.features[0]?.title || "",
         feature1Subtitle: form.features[0]?.subtitle || "",
@@ -125,7 +131,7 @@ export default function CoursesAdminPage() {
       setForm(emptyForm);
       setTimeout(() => router.push("/admin/courses"), 1200);
     } catch (err: any) {
-      setError(err?.message || "Failed to save course. Please check your BFF connection.");
+      setError(formatApiError(err, "Failed to save internship. Please check your BFF connection."));
     } finally {
       setIsSubmitting(false);
     }
@@ -143,10 +149,10 @@ export default function CoursesAdminPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-black text-[#1E1E24] flex items-center gap-3">
-            <GraduationCap size={28} className="text-[#14B8A6]" /> Add New Course
+            <GraduationCap size={28} className="text-[#14B8A6]" /> Add New Internship
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Fill in all the details to create a new course on your website
+            Fill in all the details to create a new internship on your website
           </p>
         </div>
       </div>
@@ -161,9 +167,19 @@ export default function CoursesAdminPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-4 text-sm">
-          <Warning size={20} className="flex-shrink-0 mt-0.5" />
-          {error}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-4 text-sm">
+          <div className="flex items-center gap-3">
+            <Warning size={20} className="flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          {error.includes("Session expired") && (
+            <Link
+              href="/admin/login"
+              className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 self-start sm:self-auto"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       )}
 
@@ -172,7 +188,7 @@ export default function CoursesAdminPage() {
         {/* ── Basic Info ── */}
         <SectionCard title="Basic Information" icon={<BookOpen size={20} />}>
           <div className="space-y-2">
-            <label className={labelClass}>Course Title *</label>
+            <label className={labelClass}>Internship Title *</label>
             <input
               type="text"
               value={form.title}
@@ -232,11 +248,11 @@ export default function CoursesAdminPage() {
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>Short Description (shown on course card) *</label>
+            <label className={labelClass}>Short Description (shown on internship card) *</label>
             <textarea
               value={form.shortDescription}
               onChange={(e) => set("shortDescription", e.target.value)}
-              placeholder="A short 1-2 line description shown on the course card..."
+              placeholder="A short 1-2 line description shown on the internship card..."
               rows={2}
               required
               className={`${inputClass} resize-none`}
@@ -244,11 +260,11 @@ export default function CoursesAdminPage() {
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>About This Course (full description) *</label>
+            <label className={labelClass}>About This Internship (full description) *</label>
             <textarea
               value={form.aboutDescription}
               onChange={(e) => set("aboutDescription", e.target.value)}
-              placeholder="This course is designed for anyone who wants to learn... (shown on course detail page)"
+              placeholder="This internship is designed for anyone who wants to learn... (shown on internship detail page)"
               rows={4}
               required
               className={`${inputClass} resize-none`}
@@ -259,11 +275,11 @@ export default function CoursesAdminPage() {
         {/* ── Images ── */}
         <SectionCard title="Images" icon={<ImageIcon size={20} />}>
           <div className="space-y-2">
-            <label className={labelClass}>Card Image URL</label>
+            <label className={labelClass}>Card Image</label>
             <input
-              type="url"
-              value={form.cardImage}
-              onChange={(e) => set("cardImage", e.target.value)}
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => { const file = e.target.files?.[0]; if (file && file.size <= 2 * 1024 * 1024) setForm((prev) => ({ ...prev, cardImageFile: file, cardImage: URL.createObjectURL(file) })); else if (file) setError("Image must be JPG or PNG and 2MB or smaller."); }}
               placeholder="https://... (image shown at top of the course card)"
               className={inputClass}
             />
@@ -273,15 +289,15 @@ export default function CoursesAdminPage() {
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
-            <p className="text-xs text-slate-400 pl-1">This image appears at the top of the course card on the homepage.</p>
+            <p className="text-xs text-slate-400 pl-1">This image appears at the top of the internship card on the homepage.</p>
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>Hero Image URL</label>
+            <label className={labelClass}>Hero Image</label>
             <input
-              type="url"
-              value={form.heroImage}
-              onChange={(e) => set("heroImage", e.target.value)}
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => { const file = e.target.files?.[0]; if (file && file.size <= 2 * 1024 * 1024) setForm((prev) => ({ ...prev, heroImageFile: file, heroImage: URL.createObjectURL(file) })); else if (file) setError("Image must be JPG or PNG and 2MB or smaller."); }}
               placeholder="https://... (large image on the course detail page)"
               className={inputClass}
             />
@@ -291,12 +307,12 @@ export default function CoursesAdminPage() {
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
-            <p className="text-xs text-slate-400 pl-1">This large illustration/image appears on the right side of the course detail page.</p>
+            <p className="text-xs text-slate-400 pl-1">This large illustration/image appears on the right side of the internship detail page.</p>
           </div>
         </SectionCard>
 
         {/* ── Features ── */}
-        <SectionCard title="Course Features (3 Highlights)" icon={<Star size={20} />}>
+        <SectionCard title="Internship Features (3 Highlights)" icon={<Star size={20} />}>
           <p className="text-xs text-slate-400 -mt-2">These 3 features are shown as highlights below the hero section (e.g. Beginner Friendly, Practical Learning, In-Demand Skills).</p>
           <div className="space-y-4">
             {form.features.map((feat, i) => (
@@ -328,7 +344,7 @@ export default function CoursesAdminPage() {
 
         {/* ── What You'll Learn ── */}
         <SectionCard title="What You'll Learn (Checklist)" icon={<ListChecks size={20} />}>
-          <p className="text-xs text-slate-400 -mt-2">These bullet points appear as a checklist on the course detail page.</p>
+          <p className="text-xs text-slate-400 -mt-2">These bullet points appear as a checklist on the internship detail page.</p>
           <div className="space-y-3">
             {form.learnPoints.map((point, i) => (
               <div key={i} className="flex gap-3 items-center">
@@ -379,7 +395,7 @@ export default function CoursesAdminPage() {
             ) : (
               <>
                 <Check size={22} weight="bold" />
-                <span>Add Course</span>
+                <span>Add Internship</span>
               </>
             )}
           </button>

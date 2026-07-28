@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently --kill-others --names \"next,bff\" --prefix-colors \"cyan,yellow\" \"npm run dev:next\" \"npm run dev:bff\"",
-    "dev:next": "next dev -H 0.0.0.0 --webpack",
+    "dev:next": "next dev -H 0.0.0.0 --turbo",
     "dev:bff": "cd bff && npm run dev",
     "build": "next build",
     "start": "next start",

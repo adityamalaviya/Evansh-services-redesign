@@ -13,16 +13,24 @@ export async function callPipeline<T>(
 ): Promise<T> {
   const { method = 'POST', body, requestId } = options;
   const url = `${config.pipeline.url}${path}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
 
-  const res = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Service-Token': config.pipeline.serviceToken,
-      ...(requestId ? { 'X-Request-ID': requestId } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Service-Token': config.pipeline.serviceToken,
+        ...(requestId ? { 'X-Request-ID': requestId } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!res.ok) {
     const errText = await res.text().catch(() => 'unknown error');

@@ -58,7 +58,7 @@ const Header: React.FC = () => {
             }}
             className="group relative px-5 py-2.5 text-sm font-bold text-slate-600 hover:text-[#14B8A6] transition-all rounded-full hover:bg-[#14B8A6]/10 hover:scale-110 active:scale-95 cursor-pointer"
           >
-            Courses
+            Internships
             <span className="absolute bottom-1.5 left-1/2 w-0 h-0.5 bg-[#14B8A6] transition-all duration-300 group-hover:w-1/2 group-hover:left-1/4 rounded-full"></span>
           </Link>
           <Link href="/about" className="group relative px-5 py-2.5 text-sm font-bold text-slate-600 hover:text-[#14B8A6] transition-all rounded-full hover:bg-[#14B8A6]/10 hover:scale-110 active:scale-95 cursor-pointer">
@@ -131,7 +131,7 @@ const Header: React.FC = () => {
         <nav className="flex flex-col p-6 gap-2">
           {[
             { name: "Home", href: "/#home" },
-            { name: "Courses", href: "/#courses" },
+            { name: "Internships", href: "/#courses" },
             { name: "About Us", href: "/about" },
             { name: "Our Work", href: "/works" },
             { name: "Contact", href: "/contact" },
@@ -142,7 +142,7 @@ const Header: React.FC = () => {
               href={link.href}
               onClick={(e) => {
                 setIsMobileMenuOpen(false);
-                if (link.name === "Courses" && window.location.pathname === '/') {
+                if (link.name === "Internships" && window.location.pathname === '/') {
                   e.preventDefault();
                   document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' });
                 }

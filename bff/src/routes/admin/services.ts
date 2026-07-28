@@ -11,8 +11,8 @@ const serviceSchema = z.object({
   title: z.string().min(2).max(200),
   slug: z.string().min(2).max(200).regex(/^[a-z0-9-]+$/),
   description: z.string().max(2000).optional().default(''),
-  icon: z.string().max(200).optional().default(''),
   ImageUrl: z.string().optional().default(''),
+  imageFileId: z.string().max(255).optional().or(z.literal('')),
   display_order: z.number().int().min(0).default(0),
   active: z.boolean().default(true),
 });
@@ -60,7 +60,6 @@ router.post('/', adminLimiter, requireAdmin, async (req: Request, res: Response,
       title: parsed.data.title,
       slug: parsed.data.slug,
       description: parsed.data.description,
-      icon: parsed.data.icon,
       display_order: parsed.data.display_order,
       active: parsed.data.active,
     }, req.requestId);

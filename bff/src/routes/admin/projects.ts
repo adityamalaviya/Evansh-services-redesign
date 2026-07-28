@@ -1,11 +1,11 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import { InputFile } from 'node-appwrite/file';
 import { z } from 'zod';
-import { databases, storage, DB_ID, COLLECTIONS, BUCKET_ID, ID, Query, getFilePreviewUrl } from '../../lib/appwrite';
+import { databases, storage, DB_ID, COLLECTIONS, BUCKET_ID, ID, Query } from '../../lib/appwrite';
 import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
 import { logger } from '../../lib/logger';
+import { config } from '../../config/env';
 
 const router = Router();
 
@@ -25,6 +25,40 @@ const projectSchema = z.object({
   category: z.string().max(100).optional().default(''),
 });
 
+interface UploadedImage {
+  file_id: string;
+  image_url: string;
+}
+
+async function uploadProjectImage(req: Request): Promise<UploadedImage> {
+  const body = new FormData();
+  body.append('file', new Blob([new Uint8Array(req.file!.buffer)], { type: req.file!.mimetype }), req.file!.originalname);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const response = await fetch(`${config.pipeline.url}/media/portfolio/upload-image`, {
+      method: 'POST',
+      headers: {
+        'X-Service-Token': config.pipeline.serviceToken,
+        'X-Admin-Verified': 'true',
+        ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}),
+        ...(req.headers.cookie ? { Cookie: req.headers.cookie } : {}),
+      },
+      body,
+      signal: controller.signal,
+    });
+
+    const result = await response.json() as UploadedImage | { detail?: string };
+    if (!response.ok || !('image_url' in result) || !('file_id' in result)) {
+      throw new Error(`Pipeline image upload failed (${response.status}): ${JSON.stringify(result)}`);
+    }
+    return result;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 // GET /api/admin/projects
 router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -33,9 +67,7 @@ router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, 
       Query.limit(100),
     ];
 
-    if (req.query.category === '3d') {
-      queries.push(Query.equal('category', '3D Printing'));
-    }
+
 
     const result = await databases.listDocuments(DB_ID, COLLECTIONS.projects, queries);
     res.json({
@@ -43,7 +75,7 @@ router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, 
       projects: result.documents.map((doc) => ({
         ...doc,
         imageId: doc.thumbnailFileId,
-        imageUrl: doc.thumbnailUrl || (doc.thumbnailFileId ? getFilePreviewUrl(doc.thumbnailFileId, 400, 300) : null),
+        imageUrl: doc.image_url || null,
       })),
     });
   } catch (err) { next(err); }
@@ -56,7 +88,7 @@ router.get('/:id', adminLimiter, requireAdmin, async (req: Request, res: Respons
     res.json({
       ...doc,
       imageId: doc.thumbnailFileId,
-      imageUrl: doc.thumbnailUrl || (doc.thumbnailFileId ? getFilePreviewUrl(doc.thumbnailFileId, 800, 600) : null),
+      imageUrl: doc.image_url || null,
     });
   } catch (err) { next(err); }
 });
@@ -73,27 +105,31 @@ router.post('/', adminLimiter, requireAdmin, upload.single('image'), async (req:
     let imageId: string | null = null;
     let imageUrl: string | null = null;
     if (req.file) {
-      const uploaded = await storage.createFile(
-        BUCKET_ID,
-        ID.unique(),
-        InputFile.fromBuffer(req.file.buffer, req.file.originalname)
-      );
-      imageId = uploaded.$id;
-      imageUrl = getFilePreviewUrl(imageId);
+      const uploaded = await uploadProjectImage(req);
+      imageId = uploaded.file_id;
+      imageUrl = uploaded.image_url;
     }
 
-    const doc = await databases.createDocument(DB_ID, COLLECTIONS.projects, ID.unique(), {
-      title: parsed.data.title,
-      description: parsed.data.description,
-      category: parsed.data.category,
-      thumbnailFileId: imageId,
-      thumbnailUrl: imageUrl,
-    });
+    let doc;
+    try {
+      doc = await databases.createDocument(DB_ID, COLLECTIONS.projects, ID.unique(), {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        category: parsed.data.category,
+        thumbnailFileId: imageId,
+        image_url: imageUrl || '',
+      });
+    } catch (error) {
+      if (imageId) await storage.deleteFile(BUCKET_ID, imageId).catch((cleanupError) =>
+        logger.error({ cleanupError, imageId }, 'Failed to clean up project image after document creation failure')
+      );
+      throw error;
+    }
 
     res.status(201).json({
       ...doc,
       imageId: doc.thumbnailFileId,
-      imageUrl: doc.thumbnailUrl,
+      imageUrl: doc.image_url,
     });
   } catch (err) { next(err); }
 });
@@ -109,21 +145,19 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
 
     const existing = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id);
     let imageId = existing.thumbnailFileId as string | null;
+    let imageUrl = (existing.image_url as string | undefined) || '';
 
     if (req.file) {
       // Upload new image
-      const uploaded = await storage.createFile(
-        BUCKET_ID,
-        ID.unique(),
-        InputFile.fromBuffer(req.file.buffer, req.file.originalname)
-      );
+      const uploaded = await uploadProjectImage(req);
       // Delete old image (non-blocking)
       if (imageId) {
         storage.deleteFile(BUCKET_ID, imageId).catch((err) =>
           logger.warn({ err, imageId }, 'Failed to delete old image')
         );
       }
-      imageId = uploaded.$id;
+      imageId = uploaded.file_id;
+      imageUrl = uploaded.image_url;
     }
 
     const doc = await databases.updateDocument(DB_ID, COLLECTIONS.projects, req.params.id, {
@@ -131,13 +165,13 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
       description: parsed.data.description,
       category: parsed.data.category,
       thumbnailFileId: imageId,
-      thumbnailUrl: imageId ? getFilePreviewUrl(imageId) : null,
+      image_url: imageId ? (imageUrl ?? '') : '',
     });
 
     res.json({
       ...doc,
       imageId: doc.thumbnailFileId,
-      imageUrl: doc.thumbnailUrl,
+      imageUrl: doc.image_url,
     });
   } catch (err) { next(err); }
 });

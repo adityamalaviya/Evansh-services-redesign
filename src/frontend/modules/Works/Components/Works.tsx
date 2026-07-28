@@ -4,13 +4,14 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Globe, Laptop, Database, GraduationCap, Cube, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
+import { ArrowRight, Globe, Laptop, Database, GraduationCap, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
 import { publicEnv } from "@/lib/env";
 const DB_ID = publicEnv.dbId ?? "not set";
+
 interface Project {
   id: string | number;
   title: string;
@@ -25,7 +26,6 @@ const categories = [
   { name: "Websites", icon: <Globe size={18} /> },
   { name: "Inventory Systems", icon: <Database size={18} /> },
   { name: "College Portals", icon: <GraduationCap size={18} /> },
-  { name: "3D Printing", icon: <Cube size={18} /> },
   { name: "Other Projects", icon: <DotsThreeOutline size={18} /> },
 ];
 
@@ -231,7 +231,7 @@ const Works: React.FC = () => {
       <EnrollmentModal
         isOpen={isEnrollmentOpen}
         onClose={() => setIsEnrollmentOpen(false)}
-        course={{ title: "Start Your Journey", color: "#14B8A6" }}
+        course={{ id: "start-your-journey", title: "Start Your Journey", color: "#14B8A6" }}
       />
     </section>
   );

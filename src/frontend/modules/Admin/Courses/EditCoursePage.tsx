@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, Warning, ArrowLeft } from "@phosphor-icons/react";
-import { api } from "@/lib/api";
+import { api, formatApiError } from "@/lib/api";
 import Link from "next/link";
 
 interface Feature {
@@ -19,6 +19,8 @@ interface CourseForm {
   price: string;
   cardImage: string;
   heroImage: string;
+  cardImageFile?: File | null;
+  heroImageFile?: File | null;
   themeColor: string;
   features: Feature[];
   learnPoints: string[];
@@ -77,8 +79,8 @@ export default function EditCoursePage() {
           ? doc.whatYouWillLearn.split("\n").filter(Boolean)
           : (doc.learnPoints && doc.learnPoints.length > 0 ? doc.learnPoints : [""]),
       });
-    } catch (err) {
-      setError("Course not found or connection error.");
+    } catch (err: any) {
+      setError(formatApiError(err, "Internship not found or connection error."));
     } finally {
       setIsLoading(false);
     }
@@ -131,6 +133,8 @@ export default function EditCoursePage() {
     setError(null);
 
     try {
+      const cardUpload = form.cardImageFile ? await api.adminUpdateImage("courses", form.cardImageFile) : null;
+      const heroUpload = form.heroImageFile ? await api.adminUpdateImage("courses", form.heroImageFile) : null;
       await api.adminUpdateCourse(courseId, {
         title: form.title,
         subtitle: form.subtitle,
@@ -138,8 +142,10 @@ export default function EditCoursePage() {
         aboutCourse: form.aboutDescription,
         price: parseInt(form.price) || 0,
         slug: form.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        cardImageUrl: form.cardImage,
-        heroImageUrl: form.heroImage,
+        cardImageUrl: cardUpload?.image_url || form.cardImage,
+        heroImageUrl: heroUpload?.image_url || form.heroImage,
+        cardImageFileId: cardUpload?.file_id || "",
+        heroImageFileId: heroUpload?.file_id || "",
         themeColor: form.themeColor,
         feature1Title: form.features[0]?.title || "",
         feature1Subtitle: form.features[0]?.subtitle || "",
@@ -153,7 +159,7 @@ export default function EditCoursePage() {
       router.push("/admin/courses");
       router.refresh();
     } catch (err: any) {
-      setError(err?.message || "Failed to update course.");
+      setError(formatApiError(err, "Failed to update internship."));
     } finally {
       setIsSubmitting(false);
     }
@@ -177,14 +183,24 @@ export default function EditCoursePage() {
           >
             <ArrowLeft size={18} weight="bold" />
           </Link>
-          <h1 className="text-2xl font-black text-[#1E1E24]">Edit Course</h1>
+          <h1 className="text-2xl font-black text-[#1E1E24]">Edit Internship</h1>
         </div>
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-6">
-          <Warning size={24} className="flex-shrink-0" />
-          <div>
-            <p className="font-bold">Error loading course</p>
-            <p className="text-sm opacity-90 mt-1">{error || "Course not found."}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-6">
+          <div className="flex items-start gap-3">
+            <Warning size={24} className="flex-shrink-0" />
+            <div>
+              <p className="font-bold">Error loading internship</p>
+              <p className="text-sm opacity-90 mt-1">{error || "Internship not found."}</p>
+            </div>
           </div>
+          {error?.includes("Session expired") && (
+            <Link
+              href="/admin/login"
+              className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -201,8 +217,8 @@ export default function EditCoursePage() {
           <ArrowLeft size={18} weight="bold" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-[#1E1E24]">Edit Course</h1>
-          <p className="text-slate-500 text-sm">Update the course details</p>
+          <h1 className="text-2xl font-black text-[#1E1E24]">Edit Internship</h1>
+          <p className="text-slate-500 text-sm">Update the internship details</p>
         </div>
       </div>
 
@@ -210,7 +226,7 @@ export default function EditCoursePage() {
         {/* ── Basic Info ── */}
         <SectionCard title="Basic Information" icon={<BookOpen size={20} />}>
           <div className="space-y-2">
-            <label className={labelClass}>Course Title *</label>
+            <label className={labelClass}>Internship Title *</label>
             <input
               type="text"
               value={form.title}
@@ -267,7 +283,7 @@ export default function EditCoursePage() {
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>Short Description (shown on course card) *</label>
+            <label className={labelClass}>Short Description (shown on internship card) *</label>
             <textarea
               value={form.shortDescription}
               onChange={(e) => set("shortDescription", e.target.value)}
@@ -278,7 +294,7 @@ export default function EditCoursePage() {
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>About This Course (full description) *</label>
+            <label className={labelClass}>About This Internship (full description) *</label>
             <textarea
               value={form.aboutDescription}
               onChange={(e) => set("aboutDescription", e.target.value)}
@@ -292,11 +308,11 @@ export default function EditCoursePage() {
         {/* ── Images ── */}
         <SectionCard title="Images" icon={<ImageIcon size={20} />}>
           <div className="space-y-2">
-            <label className={labelClass}>Card Image URL</label>
+            <label className={labelClass}>Card Image</label>
             <input
-              type="url"
-              value={form.cardImage}
-              onChange={(e) => set("cardImage", e.target.value)}
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => { const file = e.target.files?.[0]; if (file && file.size <= 2 * 1024 * 1024) setForm((prev) => prev ? ({ ...prev, cardImageFile: file, cardImage: URL.createObjectURL(file) }) : prev); else if (file) setError("Image must be JPG or PNG and 2MB or smaller."); }}
               className={inputClass}
             />
             {form.cardImage && (
@@ -308,11 +324,11 @@ export default function EditCoursePage() {
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>Hero Image URL</label>
+            <label className={labelClass}>Hero Image</label>
             <input
-              type="url"
-              value={form.heroImage}
-              onChange={(e) => set("heroImage", e.target.value)}
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => { const file = e.target.files?.[0]; if (file && file.size <= 2 * 1024 * 1024) setForm((prev) => prev ? ({ ...prev, heroImageFile: file, heroImage: URL.createObjectURL(file) }) : prev); else if (file) setError("Image must be JPG or PNG and 2MB or smaller."); }}
               className={inputClass}
             />
             {form.heroImage && (
@@ -325,7 +341,7 @@ export default function EditCoursePage() {
         </SectionCard>
 
         {/* ── Features ── */}
-        <SectionCard title="Course Features (3 Highlights)" icon={<Star size={20} />}>
+        <SectionCard title="Internship Features (3 Highlights)" icon={<Star size={20} />}>
           <div className="space-y-4">
             {form.features.map((feat, i) => (
               <div key={i} className="grid md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">

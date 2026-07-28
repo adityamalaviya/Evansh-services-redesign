@@ -24,9 +24,11 @@ services:
     build:
       context: ./pipeline
       dockerfile: Dockerfile
-    # No 'ports' → not accessible from host; BFF reaches it via Docker network
+    ports:
+      - "8000:8000"
     env_file:
       - ./pipeline/.env
+      - ./bff/.env
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
