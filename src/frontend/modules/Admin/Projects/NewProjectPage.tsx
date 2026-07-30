@@ -56,6 +56,8 @@ export default function NewProjectPage() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("category", category);
+      const imageId = "";
+
       if (imageFile) {
         formData.append("image", imageFile);
       }
