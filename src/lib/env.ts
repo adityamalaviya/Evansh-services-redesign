@@ -13,6 +13,8 @@ export const publicEnv = {
 
 export function requireServerEnv(name: string): string {
   return requireEnv(name);
+}
+
 const requiredShared = [
   'NEXT_PUBLIC_SENTRY_DSN',
   'NEXT_PUBLIC_API_URL',

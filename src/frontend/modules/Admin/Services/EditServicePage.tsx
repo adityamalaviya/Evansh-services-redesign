@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api, formatApiError } from "@/lib/api";
 import Link from "next/link";
+import { useAuth } from "@backend/contexts/AuthContext";
 
 const inputClass =
   "w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all";
@@ -21,6 +22,7 @@ export default function EditServicePage() {
   const router = useRouter();
   const params = useParams();
   const serviceId = params.id as string;
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
 
   const [form, setForm] = useState<ServiceForm | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,8 +45,9 @@ export default function EditServicePage() {
   }, [serviceId]);
 
   useEffect(() => {
+    if (isAuthLoading || !isLoggedIn) return;
     fetchService();
-  }, [fetchService]);
+  }, [fetchService, isAuthLoading, isLoggedIn]);
 
   const set = (key: keyof ServiceForm, value: string) => {
     if (!form) return;

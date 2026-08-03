@@ -29,12 +29,7 @@ export const COLLECTIONS = {
   contactMessages: 'contactmessages',
   enrollments: 'enrollments24651',
   projects: 'project1234',
-  portfolio: 'portfolio',
-  portfolioImages: 'portfolioimages',
-  categories: 'categories',
   settings: 'settings',
-  user: 'user24651',
-  userProfile: 'user_profile24651',
 } as const;
 
 // ── Helper: create a user-scoped Appwrite client from a session ─────────────

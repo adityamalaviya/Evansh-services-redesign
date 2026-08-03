@@ -18,7 +18,7 @@ const schema = z.object({
 
   // Internal FastAPI pipeline
   PIPELINE_SERVICE_TOKEN: z.string().min(32),
-  PIPELINE_URL: z.string().url().default(process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_PIPELINE_URL ?? '') : (process.env.NEXT_PUBLIC_PIPELINE_URL ?? 'http://localhost:8000')),
+  PIPELINE_URL: z.string().url().default(process.env.NEXT_PUBLIC_PIPELINE_URL ?? 'http://localhost:8000'),
 
   // CORS
   ALLOWED_ORIGINS: z.string().default(process.env.NEXT_PUBLIC_ALLOWED_ORIGINS ?? 'http://localhost:3000'),
@@ -35,12 +35,9 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-if (parsed.data.NODE_ENV === 'production') {
-  const origins = parsed.data.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean);
-  if (!process.env.ALLOWED_ORIGINS || origins.length === 0) {
-    console.error('❌ ALLOWED_ORIGINS must be explicitly configured in production');
-    process.exit(1);
-  }
+if (parsed.data.NODE_ENV === 'production' && !process.env.ALLOWED_ORIGINS) {
+  console.error('❌ ALLOWED_ORIGINS must be explicitly configured in production');
+  process.exit(1);
 }
 
 export const config = {

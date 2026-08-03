@@ -227,24 +227,6 @@ export default function CoursesAdminPage() {
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className={labelClass}>Theme Color</label>
-              <div className="flex gap-3 items-center">
-                <input
-                  type="color"
-                  value={form.themeColor}
-                  onChange={(e) => set("themeColor", e.target.value)}
-                  className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer flex-shrink-0"
-                />
-                <input
-                  type="text"
-                  value={form.themeColor}
-                  onChange={(e) => set("themeColor", e.target.value)}
-                  className={`${inputClass} uppercase`}
-                />
-              </div>
-            </div>
           </div>
 
           <div className="space-y-2">

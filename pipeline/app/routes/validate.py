@@ -4,6 +4,7 @@ from app.middleware.auth import verify_service_token
 from app.schemas.course import CourseValidateRequest, CourseValidateResponse
 from app.schemas.contact import ContactValidateRequest, ContactValidateResponse
 from app.schemas.service import ServiceValidateRequest, ServiceValidateResponse
+from app.schemas.enrollment import EnrollmentValidateRequest, EnrollmentValidateResponse
 
 router = APIRouter(dependencies=[Depends(verify_service_token)])
 
@@ -41,3 +42,13 @@ async def validate_service(payload: dict) -> ServiceValidateResponse:
         return ServiceValidateResponse(valid=True)
     except ValidationError as exc:
         return ServiceValidateResponse(valid=False, errors=_extract_errors(exc))
+
+
+@router.post("/validate/enrollment", response_model=EnrollmentValidateResponse)
+async def validate_enrollment(payload: dict) -> EnrollmentValidateResponse:
+    try:
+        EnrollmentValidateRequest(**payload)
+        return EnrollmentValidateResponse(valid=True)
+    except ValidationError as exc:
+        return EnrollmentValidateResponse(valid=False, errors=_extract_errors(exc))
+

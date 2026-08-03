@@ -9,8 +9,7 @@ import { tokens } from "@frontend/styles/tokens";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
-import { publicEnv } from "@/lib/env";
-const DB_ID = publicEnv.dbId ?? "not set";
+
 
 interface Project {
   id: string | number;
@@ -66,19 +65,18 @@ const Works: React.FC = () => {
       setError(null);
       try {
         const res = await api.getProjects();
-        
-        const fetchedProjects = res.projects.map((doc: any) => ({
-          id: doc.id,
-          title: doc.title,
-          category: doc.category,
-          description: doc.description,
-          image: doc.imageUrl || ""
-        }));
-        
-        setDbProjects(fetchedProjects);
+        if (res.projects && res.projects.length > 0) {
+          const fetchedProjects = res.projects.map((doc: any) => ({
+            id: doc.id,
+            title: doc.title,
+            category: doc.category || "Other Projects",
+            description: doc.description || "",
+            image: doc.imageUrl || "",
+          }));
+          setDbProjects(fetchedProjects);
+        }
       } catch (err: any) {
-        console.error("BFF Fetch error:", err);
-        setError(`Failed to connect to database: ${err.message || 'Unknown error'}`);
+        console.warn("BFF projects fetch failed or timed out:", err);
       } finally {
         setLoading(false);
       }
@@ -140,9 +138,8 @@ const Works: React.FC = () => {
                <p className="text-sm opacity-80">{error}</p>
              </div>
              <p className="text-slate-500 text-sm">
-               Please verify that your <b>Database ID</b> in <code>.env.local</code> matches your Appwrite Console exactly. 
-               The current ID being used is <span className="font-mono bg-slate-100 px-1 rounded">{DB_ID}</span>.
-             </p>
+                Please verify that your BFF service is running and the <code>.env.local</code> variables are configured correctly.
+              </p>
              <button 
                 onClick={() => window.location.reload()}
                 className="text-[#14B8A6] font-bold text-sm hover:underline"

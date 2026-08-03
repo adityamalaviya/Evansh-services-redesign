@@ -145,7 +145,6 @@ export default function AdminCoursesPage() {
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
                   <th className="text-left text-xs font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Internship</th>
-                  <th className="text-left text-xs font-bold text-slate-400 uppercase tracking-widest px-4 py-4">Theme</th>
                   <th className="text-left text-xs font-bold text-slate-400 uppercase tracking-widest px-4 py-4">Price</th>
                   <th className="text-right text-xs font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Actions</th>
                 </tr>
@@ -158,15 +157,6 @@ export default function AdminCoursesPage() {
                         <div>
                           <p className="text-[#1E1E24] font-semibold text-sm leading-tight line-clamp-1">{course.title}</p>
                         <p className="text-slate-400 text-xs mt-0.5 line-clamp-1">{course.shortDescription || (course as any).description}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-4 h-4 rounded-full border border-slate-200" 
-                            style={{ backgroundColor: course.themeColor || "#14B8A6" }}
-                          />
-                          <span className="text-slate-600 text-xs font-mono uppercase">{course.themeColor || "#14B8A6"}</span>
                         </div>
                       </td>
                       <td className="px-4 py-4">

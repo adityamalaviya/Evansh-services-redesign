@@ -150,10 +150,19 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
     if (req.file) {
       // Upload new image
       const uploaded = await uploadProjectImage(req);
-      // Delete old image (non-blocking)
+      // Delete old image via Pipeline (non-blocking)
       if (imageId) {
-        storage.deleteFile(BUCKET_ID, imageId).catch((err) =>
-          logger.warn({ err, imageId }, 'Failed to delete old image')
+        const formData = new FormData();
+        formData.append('file_id', imageId);
+        fetch(`${config.pipeline.url}/media/portfolio/delete-image`, {
+          method: 'DELETE',
+          headers: {
+            'X-Service-Token': config.pipeline.serviceToken,
+            'X-Admin-Verified': 'true',
+          },
+          body: formData,
+        }).catch((err) =>
+          logger.warn({ err, imageId }, 'Failed to delete old image via Pipeline')
         );
       }
       imageId = uploaded.file_id;
@@ -176,16 +185,25 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
   } catch (err) { next(err); }
 });
 
-// DELETE /api/admin/projects/:id — deletes document + storage file
+// DELETE /api/admin/projects/:id — deletes document + storage file via Pipeline
 router.delete('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id);
     await databases.deleteDocument(DB_ID, COLLECTIONS.projects, req.params.id);
 
-    // Delete associated image from storage
+    // Delete associated image via Pipeline
     if (doc.thumbnailFileId) {
-      await storage.deleteFile(BUCKET_ID, doc.thumbnailFileId).catch((err) =>
-        logger.warn({ err, imageId: doc.thumbnailFileId }, 'Failed to delete storage file during project deletion')
+      const formData = new FormData();
+      formData.append('file_id', doc.thumbnailFileId);
+      await fetch(`${config.pipeline.url}/media/portfolio/delete-image`, {
+        method: 'DELETE',
+        headers: {
+          'X-Service-Token': config.pipeline.serviceToken,
+          'X-Admin-Verified': 'true',
+        },
+        body: formData,
+      }).catch((err) =>
+        logger.warn({ err, imageId: doc.thumbnailFileId }, 'Failed to delete storage file via Pipeline')
       );
     }
 

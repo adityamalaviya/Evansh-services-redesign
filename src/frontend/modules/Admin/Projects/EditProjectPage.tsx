@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { api, formatApiError } from "@/lib/api";
+import { useAuth } from "@backend/contexts/AuthContext";
 import {
   ArrowLeft,
   UploadSimple,
@@ -19,11 +20,11 @@ export default function EditProjectPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
-  const [order, setOrder] = useState<number>(0);
   const [currentImageId, setCurrentImageId] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -39,7 +40,6 @@ export default function EditProjectPage() {
       setTitle(doc.title);
       setDescription(doc.description);
       setCategory(doc.category);
-      setOrder(doc.order || 0);
       setCurrentImageId(doc.imageId || "");
 
       if (doc.imageUrl) {
@@ -53,8 +53,9 @@ export default function EditProjectPage() {
   }, [projectId]);
 
   useEffect(() => {
+    if (isAuthLoading || !isLoggedIn) return;
     fetchProject();
-  }, [fetchProject]);
+  }, [fetchProject, isAuthLoading, isLoggedIn]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -186,15 +187,6 @@ export default function EditProjectPage() {
                 >
                   {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Display Order</label>
-                <input
-                  type="number"
-                  value={order}
-                  onChange={(e) => setOrder(parseInt(e.target.value))}
-                  className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
-                />
               </div>
             </div>
 

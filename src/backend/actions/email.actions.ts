@@ -11,8 +11,6 @@ export async function sendContactEmail(formData: {
 }) {
   const RESEND_API_KEY = requireServerEnv("RESEND_API_KEY");
   const ADMIN_EMAIL = requireServerEnv("ADMIN_EMAIL");
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  const ADMIN_EMAIL = "evanshservices24651@gmail.com";
 
   if (!RESEND_API_KEY) {
     console.error("RESEND_API_KEY is not set in environment variables.");

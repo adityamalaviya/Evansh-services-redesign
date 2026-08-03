@@ -96,7 +96,6 @@ const ContactPage = () => {
 
     try {
       await api.submitContact({
-      await databases.createDocument(DB_ID, CONTACT_COLLECTION_ID, ID.unique(), {
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || "",
@@ -115,8 +114,6 @@ const ContactPage = () => {
 
       setSubmitStatus("success");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-    } catch (err: any) {
-      const message = err?.message || "Unknown error occurred.";
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error occurred.";
       setErrorMessage(`Failed to send: ${message}`);
@@ -266,9 +263,6 @@ const ContactPage = () => {
                     />
                     {errors.phone && (
                       <p className="text-red-500 text-xs pl-1">{errors.phone}</p>
-                    />
-                    {errors.phone && (
-                      <p className="text-red-500 text-xs pl-1">{errors.phone}</p>
                     )}
                   </div>
 
@@ -350,9 +344,6 @@ const ContactPage = () => {
 
           {/* Map Section */}
           <div className="mb-24 relative group">
-            <div className="overflow-hidden rounded-[40px] shadow-2xl shadow-slate-200 border-8 border-white transition-transform duration-500 group-hover:scale-[1.01]">
-              <iframe
-                src="https://www.google.com/maps?q=SDB+-+82,+Ward+2A,1st+Floor,+Above+Yuva+Collection,+Adipur,Gandhidham,+Gujarat+370205&output=embed"
             <div className="relative overflow-hidden rounded-[40px] shadow-2xl shadow-slate-200 border-8 border-white transition-transform duration-500 group-hover:scale-[1.01]">
               <iframe
                 src="https://maps.google.com/maps?q=1st+floor+near+SDB+73+Santoshi+Cross+Road+Ward+2A+Adipur+Gandhidham+Gujarat+370205&z=17&output=embed"
@@ -375,6 +366,8 @@ const ContactPage = () => {
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-2.5 h-2.5 bg-white rounded-full"></div>
                   </div>
                 </div>
+              </div>
+
               {/* Static pin — tip points to geographic centre of embed (offset for Maps header ~50px) */}
               <div
                 className="absolute -translate-x-1/2 -translate-y-full pointer-events-none select-none"

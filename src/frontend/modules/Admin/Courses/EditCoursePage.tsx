@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api, formatApiError } from "@/lib/api";
 import Link from "next/link";
+import { useAuth } from "@backend/contexts/AuthContext";
 
 interface Feature {
   title: string;
@@ -52,6 +53,7 @@ export default function EditCoursePage() {
   const router = useRouter();
   const params = useParams();
   const courseId = params.id as string;
+  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
 
   const [form, setForm] = useState<CourseForm | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,8 +89,9 @@ export default function EditCoursePage() {
   }, [courseId]);
 
   useEffect(() => {
+    if (isAuthLoading || !isLoggedIn) return;
     fetchCourse();
-  }, [fetchCourse]);
+  }, [fetchCourse, isAuthLoading, isLoggedIn]);
 
   const set = (key: keyof CourseForm, value: string) => {
     if (!form) return;
@@ -259,24 +262,6 @@ export default function EditCoursePage() {
                   required
                   min="0"
                   className={`${inputClass} pl-8`}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className={labelClass}>Theme Color</label>
-              <div className="flex gap-3 items-center">
-                <input
-                  type="color"
-                  value={form.themeColor}
-                  onChange={(e) => set("themeColor", e.target.value)}
-                  className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer flex-shrink-0"
-                />
-                <input
-                  type="text"
-                  value={form.themeColor}
-                  onChange={(e) => set("themeColor", e.target.value)}
-                  className={`${inputClass} uppercase`}
                 />
               </div>
             </div>

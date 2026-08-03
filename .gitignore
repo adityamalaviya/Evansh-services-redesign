@@ -10,11 +10,3 @@ backend/.env
 backend/__pycache__/
 *.pyc
 pipeline/.venv/
-fastapi-backend/.venv/
-__pycache__/
-tsconfig.tsbuildinfo
-changed_files.txt
-filtered.txt
-security_files.txt
-structure.md
-*.db

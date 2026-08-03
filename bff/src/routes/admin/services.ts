@@ -86,6 +86,17 @@ router.put('/:id', adminLimiter, requireAdmin, async (req: Request, res: Respons
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid data.', fields: parsed.error.flatten().fieldErrors } });
       return;
     }
+    const pipelineResult = await validateWithPipeline('/pipeline/validate/service', {
+      title: parsed.data.title ?? '',
+      slug: parsed.data.slug ?? 'temp-slug',
+      description: parsed.data.description ?? '',
+      display_order: parsed.data.display_order ?? 0,
+      active: parsed.data.active ?? true,
+    }, req.requestId);
+    if (!pipelineResult.valid) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid data.', fields: pipelineResult.errors } });
+      return;
+    }
     const doc = await databases.updateDocument(DB_ID, COLLECTIONS.services, req.params.id, parsed.data);
     res.json({
       ...doc,

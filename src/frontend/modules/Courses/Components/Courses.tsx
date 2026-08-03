@@ -2,19 +2,16 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  ArrowRight
-} from "@phosphor-icons/react";
+import { ArrowRight } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import CourseModal, { CourseModalData } from "./CourseModal";
-import CourseModal from "./CourseModal";
+import { api } from "@/lib/api";
 
 // ── Course interface — same as before + extra fields for modal ──────────────
 interface Course {
   id: number | string;
   title: string;
   description: string;   // used on the card (shortDescription from DB)
-  description: string;
   color: string;
   bgColor: string;
   borderColor: string;
@@ -96,14 +93,12 @@ interface CoursesProps {
 }
 
 // ── Card component — identical to original ────────────────────────────────
-// Single card component
 const CourseCard: React.FC<{ course: Course; onClick: (course: Course) => void }> = ({ course, onClick }) => (
   <div
     onClick={() => onClick(course)}
     className={`group flex-shrink-0 w-[320px] rounded-[40px] border-2 ${course.borderColor} ${course.bgColor} transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,0,0,0.10)] hover:-translate-y-2 active:scale-95 flex flex-col justify-between relative overflow-hidden cursor-pointer touch-manipulation`}
     style={{ height: "380px" }}
   >
-
     {/* Top Image Section (Spans to the top edges of the card) */}
     <div className="relative w-full h-[150px] overflow-hidden border-b border-slate-100">
       {course.image ? (
@@ -147,10 +142,6 @@ const CourseCard: React.FC<{ course: Course; onClick: (course: Course) => void }
   </div>
 );
 
-import { api } from "@/lib/api";
-import { databases, DB_ID, COURSES_COLLECTION_ID } from "@backend/services/appwrite";
-import { Query } from "appwrite";
-
 const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
   const [isVisible, setIsVisible] = useState(forceVisible);
   const [activeCourses, setActiveCourses] = useState<Course[]>(courses);
@@ -162,25 +153,18 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchCoursesFromAppwrite = async () => {
+    const fetchCoursesFromBFF = async () => {
       try {
         const res = await api.getCourses();
         if (res.courses.length > 0) {
           const mapped: Course[] = res.courses.map((doc: any) => ({
             id: doc.id,
-        const res = await databases.listDocuments(DB_ID, COURSES_COLLECTION_ID, [
-          Query.orderAsc("order"),
-          Query.limit(100)
-        ]);
-        if (res.documents.length > 0) {
-          const mapped: Course[] = res.documents.map((doc: any) => ({
-            id: doc.$id,
             title: doc.title,
-            description: doc.shortDescription || doc.description || "",
+            description: doc.shortDescription || doc.subtitle || doc.description || "",
             color: doc.themeColor || "#14B8A6",
             bgColor: doc.bgColor || "bg-teal-50/50",
             borderColor: doc.borderColor || "border-teal-100",
-            image: doc.cardImageUrl || doc.image || "",
+            image: doc.cardImageUrl || "",
             // extra modal-only fields
             subtitle: doc.subtitle,
             aboutCourse: doc.aboutCourse,
@@ -193,16 +177,14 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
             feature3Title: doc.feature3Title,
             feature3Subtitle: doc.feature3Subtitle,
             whatYouWillLearn: doc.whatYouWillLearn,
-            image: doc.cardImage || doc.image || ""
           }));
           setActiveCourses(mapped);
         }
       } catch (err) {
         console.warn("BFF courses fetch failed, using local fallback:", err);
-        console.warn("Appwrite courses fetch failed, using local fallback:", err);
       }
     };
-    fetchCoursesFromAppwrite();
+    fetchCoursesFromBFF();
   }, []);
 
   // Auto-open course modal if redirected from login page with ?course= param
@@ -320,22 +302,12 @@ const Courses: React.FC<CoursesProps> = ({ forceVisible = false }) => {
             ))}
           </div>
         </div>
-
       </section>
 
       <CourseModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         course={modalData}
-        course={
-          selectedCourse
-            ? {
-                title: selectedCourse.title,
-                description: selectedCourse.description,
-                color: selectedCourse.color
-              }
-            : null
-        }
       />
     </>
   );

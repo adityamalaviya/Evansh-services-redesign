@@ -60,12 +60,8 @@ export default function AdminProjectsPage() {
     if (!confirm(`Are you sure you want to delete "${project.title}"?`)) return;
     setDeletingId(project.$id);
     try {
-      // BFF handles both document and storage file deletion server-side
+      // BFF handles both document and storage file deletion via Pipeline server-side
       await api.adminDeleteProject(project.$id);
-      if (project.imageId) {
-        await storage.deleteFile(BUCKET_ID, project.imageId).catch(() => {});
-      }
-      await databases.deleteDocument(DB_ID, PROJECTS_COLLECTION_ID, project.$id);
       setProjects((prev) => prev.filter((p) => p.$id !== project.$id));
     } catch {
       alert("Failed to delete project. Please try again.");

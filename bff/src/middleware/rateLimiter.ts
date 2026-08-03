@@ -20,10 +20,10 @@ export const publicLimiter = makeHandler(
   'Too many requests. Please wait a moment and try again.'
 );
 
-// Admin API — 20 requests per minute
+// Admin API — 120 requests per minute
 export const adminLimiter = makeHandler(
   60 * 1000,
-  20,
+  120,
   'Too many admin requests. Please slow down.'
 );
 
