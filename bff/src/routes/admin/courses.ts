@@ -40,7 +40,7 @@ router.get('/', adminLimiter, requireAdmin, async (_req: Request, res: Response,
 });
 
 // GET /api/admin/courses/:id
-router.get('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTIONS.courses, req.params.id);
     res.json(doc);
@@ -74,7 +74,7 @@ router.post('/', adminLimiter, requireAdmin, async (req: Request, res: Response,
 });
 
 // PUT /api/admin/courses/:id
-router.put('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const parsed = courseSchema.partial().safeParse(req.body);
     if (!parsed.success) {
@@ -100,7 +100,7 @@ router.put('/:id', adminLimiter, requireAdmin, async (req: Request, res: Respons
 });
 
 // DELETE /api/admin/courses/:id
-router.delete('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     await databases.deleteDocument(DB_ID, COLLECTIONS.courses, req.params.id);
     res.status(204).send();

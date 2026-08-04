@@ -34,7 +34,7 @@ router.get('/', publicLimiter, async (req: Request, res: Response, next: NextFun
 });
 
 // GET /api/projects/:id — single project
-router.get('/:id', publicLimiter, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', publicLimiter, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id);
     res.json({

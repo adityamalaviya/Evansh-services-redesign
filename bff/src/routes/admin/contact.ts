@@ -23,7 +23,7 @@ router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, 
 });
 
 // DELETE /api/admin/contact/:id — delete a contact message
-router.delete('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     await databases.deleteDocument(DB_ID, COLLECTIONS.contactMessages, req.params.id);
     res.status(204).send();

@@ -35,7 +35,7 @@ router.get('/', adminLimiter, requireAdmin, async (_req: Request, res: Response,
 });
 
 // GET /api/admin/services/:id
-router.get('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTIONS.services, req.params.id);
     res.json({
@@ -76,7 +76,7 @@ router.post('/', adminLimiter, requireAdmin, async (req: Request, res: Response,
 });
 
 // PUT /api/admin/services/:id
-router.put('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     if (req.body.image !== undefined && req.body.ImageUrl === undefined) {
       req.body.ImageUrl = req.body.image;
@@ -106,7 +106,7 @@ router.put('/:id', adminLimiter, requireAdmin, async (req: Request, res: Respons
 });
 
 // DELETE /api/admin/services/:id
-router.delete('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     await databases.deleteDocument(DB_ID, COLLECTIONS.services, req.params.id);
     res.status(204).send();

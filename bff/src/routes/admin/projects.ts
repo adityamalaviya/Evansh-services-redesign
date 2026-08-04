@@ -82,7 +82,7 @@ router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, 
 });
 
 // GET /api/admin/projects/:id
-router.get('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id);
     res.json({
@@ -135,7 +135,7 @@ router.post('/', adminLimiter, requireAdmin, upload.single('image'), async (req:
 });
 
 // PUT /api/admin/projects/:id — with optional image replacement
-router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const parsed = projectSchema.partial().safeParse(req.body);
     if (!parsed.success) {
@@ -186,7 +186,7 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
 });
 
 // DELETE /api/admin/projects/:id — deletes document + storage file via Pipeline
-router.delete('/:id', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id);
     await databases.deleteDocument(DB_ID, COLLECTIONS.projects, req.params.id);
