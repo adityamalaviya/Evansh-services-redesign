@@ -10,3 +10,4 @@ backend/.env
 backend/__pycache__/
 *.pyc
 pipeline/.venv/
+pipeline/.env

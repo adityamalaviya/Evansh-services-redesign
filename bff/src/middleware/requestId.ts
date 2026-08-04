@@ -1,19 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-// Extend Express Request type to carry requestId
-declare global {
-  namespace Express {
-    interface Request {
-      requestId: string;
-      user?: {
-        userId: string;
-        email: string;
-        name: string;
-      };
-    }
-  }
-}
+// Type augmentation is in src/types/express.d.ts — applies globally.
 
 export function requestIdMiddleware(req: Request, res: Response, next: NextFunction): void {
   const suppliedId = req.headers['x-request-id'];
