@@ -1,0 +1,56 @@
+name: Build & Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── Pipeline (FastAPI) ──────────────────────────────────────────────
+      - name: Build & push pipeline
+        uses: docker/build-push-action@v5
+        with:
+          context: ./pipeline
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/evansh-pipeline:latest
+            ghcr.io/${{ github.repository_owner }}/evansh-pipeline:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── BFF (Node/Hono) ────────────────────────────────────────────────
+      - name: Build & push bff
+        uses: docker/build-push-action@v5
+        with:
+          context: ./bff
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/evansh-bff:latest
+            ghcr.io/${{ github.repository_owner }}/evansh-bff:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
