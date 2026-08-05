@@ -24,8 +24,6 @@ services:
     build:
       context: ./pipeline
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
     env_file:
       - ./pipeline/.env
       - ./bff/.env
