@@ -21,7 +21,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user has an active session
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -39,11 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, pass: string) => {
-    // If a session already exists, delete it first before creating a new one
     try {
       await account.deleteSession('current');
     } catch {
-      // No active session — that's fine, continue
+      // No active session — fine
     }
     await account.createEmailPasswordSession(email, pass);
     const currentUser = await account.get();
@@ -57,7 +55,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithOAuth = (provider: OAuthProvider) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    account.createOAuth2Session(
+    // createOAuth2Token passes userId+secret as URL params to the callback,
+    // which exchanges them for a real session via account.createSession().
+    account.createOAuth2Token(
       provider,
       `${origin}/auth/oauth-callback`,
       `${origin}/login?oauth_error=1`

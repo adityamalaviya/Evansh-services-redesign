@@ -27,11 +27,6 @@ interface CourseForm {
   learnPoints: string[];
 }
 
-const defaultFeatures: Feature[] = [
-  { title: "Beginner Friendly", subtitle: "Start from the basics." },
-  { title: "Practical Learning", subtitle: "Hands-on examples." },
-  { title: "In-Demand Skills", subtitle: "Boost your career." },
-];
 
 const inputClass =
   "w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all";

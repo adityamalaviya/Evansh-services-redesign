@@ -25,7 +25,6 @@ export default function EditProjectPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
-  const [currentImageId, setCurrentImageId] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -40,7 +39,6 @@ export default function EditProjectPage() {
       setTitle(doc.title);
       setDescription(doc.description);
       setCategory(doc.category);
-      setCurrentImageId(doc.imageId || "");
 
       if (doc.imageUrl) {
         setImagePreview(doc.imageUrl);
