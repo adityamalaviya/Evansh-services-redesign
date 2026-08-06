@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import {
   Images,
-  Cube,
   GraduationCap,
   Briefcase,
   ArrowRight,
@@ -142,7 +141,6 @@ export default function AdminDashboard() {
           ))}
         </div>
       </div>
-
 
       {/* Info Banner */}
       <div className="bg-teal-50 border border-teal-100 rounded-2xl p-6">

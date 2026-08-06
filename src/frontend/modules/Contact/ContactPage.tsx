@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Phone,
   Envelope,
@@ -16,7 +16,6 @@ import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
 import { api } from "@/lib/api";
 
-import { databases, DB_ID, CONTACT_COLLECTION_ID, ID } from "@backend/services/appwrite";
 import { sendContactEmail } from "@backend/actions/email.actions";
 
 interface ContactFormData {

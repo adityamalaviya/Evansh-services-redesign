@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import React from "react";
 import { Header, Footer } from "@frontend/components";
 import Works from "@frontend/modules/Works/Components/Works";
 

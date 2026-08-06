@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Globe, Laptop, Database, GraduationCap, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import EnrollmentModal from "@frontend/modules/Courses/Components/EnrollmentModal";
-
 
 interface Project {
   id: string | number;
