@@ -18,7 +18,7 @@ import { OAuthProvider } from "appwrite";
 export default function AuthLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, loginWithGoogle, loginWithOAuth, isLoggedIn, isLoading, user } = useAuth();
+  const { login, loginWithOAuth, isLoggedIn, isLoading, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

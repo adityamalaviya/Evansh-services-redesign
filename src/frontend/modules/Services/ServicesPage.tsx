@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
 import { api } from "@/lib/api";
-import { databases, DB_ID, SERVICES_COLLECTION_ID } from "@backend/services/appwrite";
-import { Query } from "appwrite";
 
 const staticServices = [
   {
