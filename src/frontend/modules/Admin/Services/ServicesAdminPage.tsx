@@ -5,8 +5,12 @@ import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api, formatApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { sanitizeImageUrl } from "@/lib/utils";
-import Image from "next/image";
+import { z } from "zod";
+
+const serviceSchema = z.object({
+  title: z.string().trim().min(1, "Service title is required.").max(200),
+  subtitle: z.string().trim().min(1, "Subtitle / description is required.").max(2000),
+});
 
 export default function ServicesAdminPage() {
   const router = useRouter();
@@ -20,6 +24,11 @@ export default function ServicesAdminPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = serviceSchema.safeParse({ title, subtitle });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid input.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
     setSuccess(false);
@@ -111,17 +120,35 @@ export default function ServicesAdminPage() {
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 block">Service Image</label>
             <input
               type="file"
-              accept="image/jpeg,image/png"
+              accept="image/jpeg,image/png,image/webp"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file && file.size <= 2 * 1024 * 1024) { setImageFile(file); setImage(URL.createObjectURL(file)); }
-                else if (file) setError("Image must be JPG or PNG and 2MB or smaller.");
+                if (file) {
+                  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+                  const MAX_SIZE = 2 * 1024 * 1024;
+                  if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) {
+                    setError("Image must be JPG, PNG, or WEBP and 2MB or smaller.");
+                    return;
+                  }
+                  setImageFile(file);
+                  setImage(URL.createObjectURL(file));
+                }
               }}
               className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
             />
             {image && (
-              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
-                <Image src={sanitizeImageUrl(image)} alt="Service preview" fill className="object-cover" unoptimized />
+              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
+                {(() => {
+                  const safeImage = (() => {
+                    try {
+                      const url = new URL(image ?? '');
+                      return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+                    } catch {
+                      return '';
+                    }
+                  })();
+                  return <img src={safeImage} alt="Service preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />;
+                })()}
               </div>
             )}
           </div>

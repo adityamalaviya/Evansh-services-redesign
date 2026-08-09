@@ -3,6 +3,15 @@
 import React, { useState } from "react";
 import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api, formatApiError } from "@/lib/api";
+import { z } from "zod";
+
+const courseSchema = z.object({
+  title: z.string().trim().min(1, "Title is required.").max(200),
+  subtitle: z.string().trim().min(1, "Subtitle is required.").max(500),
+  price: z.string().trim().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Valid price is required."),
+  shortDescription: z.string().trim().min(1, "Short description is required.").max(1000),
+  aboutDescription: z.string().trim().min(1, "About description is required.").max(5000),
+});
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { sanitizeImageUrl } from "@/lib/utils";
@@ -100,6 +109,17 @@ export default function CoursesAdminPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = courseSchema.safeParse({
+      title: form.title,
+      subtitle: form.subtitle,
+      price: form.price,
+      shortDescription: form.shortDescription,
+      aboutDescription: form.aboutDescription,
+    });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid input.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
     setSuccess(false);
@@ -262,8 +282,19 @@ export default function CoursesAdminPage() {
             <label className={labelClass}>Card Image</label>
             <input
               type="file"
-              accept="image/jpeg,image/png"
-              onChange={(e) => { const file = e.target.files?.[0]; if (file && file.size <= 2 * 1024 * 1024) setForm((prev) => ({ ...prev, cardImageFile: file, cardImage: URL.createObjectURL(file) })); else if (file) setError("Image must be JPG or PNG and 2MB or smaller."); }}
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+                  const MAX_SIZE = 2 * 1024 * 1024;
+                  if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) {
+                    setError("Card image must be JPG, PNG, or WEBP and 2MB or smaller.");
+                    return;
+                  }
+                  setForm((prev) => ({ ...prev, cardImageFile: file, cardImage: URL.createObjectURL(file) }));
+                }
+              }}
               placeholder="https://... (image shown at top of the course card)"
               className={inputClass}
             />
@@ -279,8 +310,19 @@ export default function CoursesAdminPage() {
             <label className={labelClass}>Hero Image</label>
             <input
               type="file"
-              accept="image/jpeg,image/png"
-              onChange={(e) => { const file = e.target.files?.[0]; if (file && file.size <= 2 * 1024 * 1024) setForm((prev) => ({ ...prev, heroImageFile: file, heroImage: URL.createObjectURL(file) })); else if (file) setError("Image must be JPG or PNG and 2MB or smaller."); }}
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+                  const MAX_SIZE = 2 * 1024 * 1024;
+                  if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) {
+                    setError("Hero image must be JPG, PNG, or WEBP and 2MB or smaller.");
+                    return;
+                  }
+                  setForm((prev) => ({ ...prev, heroImageFile: file, heroImage: URL.createObjectURL(file) }));
+                }
+              }}
               placeholder="https://... (large image on the course detail page)"
               className={inputClass}
             />

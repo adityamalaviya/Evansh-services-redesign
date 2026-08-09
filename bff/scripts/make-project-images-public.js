@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { Client, Databases, Storage, Permission, Role } = require('node-appwrite');
+import 'dotenv/config';
+import { Client, Databases, Storage, Permission, Role } from 'node-appwrite';
 
 const endpoint = process.env.APPWRITE_ENDPOINT || process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
 const projectId = process.env.APPWRITE_PROJECT_ID || process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;

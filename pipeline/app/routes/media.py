@@ -1,13 +1,13 @@
+from typing import Literal
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from appwrite.client import Client
 from appwrite.id import ID
 from appwrite.permission import Permission
 from appwrite.role import Role
-from appwrite.services.databases import Databases
 from appwrite.services.storage import Storage
 from appwrite.input_file import InputFile
 
-from app.config import APPWRITE_API_KEY, APPWRITE_BUCKET_ID, APPWRITE_DB_ID, APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID
+from app.config import APPWRITE_API_KEY, APPWRITE_BUCKET_ID, APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID
 from app.middleware.auth import require_admin_media
 
 router = APIRouter(dependencies=[Depends(require_admin_media)])
@@ -16,7 +16,6 @@ ALLOWED = {"image/jpeg", "image/png"}
 
 client = Client().set_endpoint(APPWRITE_ENDPOINT).set_project(APPWRITE_PROJECT_ID).set_key(APPWRITE_API_KEY)
 storage = Storage(client)
-databases = Databases(client)
 
 async def _upload(category: str, file: UploadFile):
     if file.content_type not in ALLOWED:
@@ -46,15 +45,23 @@ async def upload_portfolio_image(file: UploadFile = File(...)): return await _up
 async def upload_service_image(file: UploadFile = File(...)): return await _upload("services", file)
 
 @router.delete("/{entity}/delete-image")
-async def delete_image(entity: str, file_id: str = Form(...)):
+async def delete_image(
+    entity: Literal["courses", "portfolio", "services"],
+    file_id: str = Form(..., min_length=1, max_length=100),
+):
     if entity not in {"courses", "portfolio", "services"}:
         raise HTTPException(404, "Unknown image collection.")
     storage.delete_file(APPWRITE_BUCKET_ID, file_id)
     return {"file_id": file_id, "deleted": True}
 
 @router.put("/{entity}/update-image")
-async def update_image(entity: str, file: UploadFile = File(...), old_file_id: str | None = Form(None)):
+async def update_image(
+    entity: Literal["courses", "portfolio", "services"],
+    file: UploadFile = File(...),
+    old_file_id: str | None = Form(None, min_length=1, max_length=100),
+):
     result = await _upload(entity, file)
     if old_file_id:
         storage.delete_file(APPWRITE_BUCKET_ID, old_file_id)
     return result
+

@@ -5,7 +5,10 @@ import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
 import { validateWithPipeline } from '../../lib/pipelineValidation';
 
+import { authMiddleware } from '../../middleware/authMiddleware';
+
 const router = Router();
+router.use(authMiddleware);
 
 const courseSchema = z.object({
   title: z.string().min(2).max(200),

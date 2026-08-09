@@ -6,6 +6,15 @@ import Link from "next/link";
 import { LockKey, Eye, EyeSlash, ArrowRight, CheckCircle } from "@phosphor-icons/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { account } from "@backend/services/appwrite";
+import { z } from "zod";
+
+const resetPasswordSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters.").max(255),
+  confirmPassword: z.string().min(1, "Please confirm your password."),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"],
+});
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -31,12 +40,9 @@ function ResetPasswordForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    const result = resetPasswordSchema.safeParse({ password, confirmPassword });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid password.");
       return;
     }
     setIsSubmitting(true);

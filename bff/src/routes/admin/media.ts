@@ -4,7 +4,10 @@ import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
 
+import { authMiddleware } from '../../middleware/authMiddleware';
+
 const router = Router();
+router.use(authMiddleware);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
 async function forward(req: Request, res: Response, next: NextFunction, path: string, method = 'POST') {

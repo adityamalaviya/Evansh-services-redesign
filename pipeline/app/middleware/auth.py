@@ -1,3 +1,5 @@
+import os
+import jwt
 from fastapi import Request, HTTPException
 from appwrite.client import Client
 from appwrite.services.account import Account
@@ -6,13 +8,26 @@ import secrets
 
 
 async def verify_service_token(request: Request) -> None:
-    """Dependency: validates the X-Service-Token header on all pipeline requests."""
+    """Dependency: validates the X-Service-Token header and optional service JWT on all pipeline requests."""
     token = request.headers.get("X-Service-Token", "")
     if not token or not secrets.compare_digest(token, PIPELINE_SERVICE_TOKEN):
         raise HTTPException(
             status_code=403,
             detail={"code": "FORBIDDEN", "message": "Invalid or missing service token."},
         )
+    
+    secret = os.getenv("SERVICE_JWT_SECRET")
+    if secret:
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing or invalid Bearer service token")
+        jwt_token = auth_header[7:]
+        try:
+            jwt.decode(jwt_token, secret, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Service token expired")
+        except jwt.InvalidTokenError:
+            raise HTTPException(status_code=401, detail="Invalid service token")
 
 
 async def require_admin_media(request: Request) -> None:

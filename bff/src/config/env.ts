@@ -18,6 +18,7 @@ const schema = z.object({
 
   // Internal FastAPI pipeline
   PIPELINE_SERVICE_TOKEN: z.string().min(32),
+  SERVICE_JWT_SECRET: z.string().optional().default(process.env.SERVICE_JWT_SECRET ?? ''),
   PIPELINE_URL: z.string().url().default(process.env.NEXT_PUBLIC_PIPELINE_URL ?? 'http://localhost:8000'),
 
   // CORS
@@ -44,6 +45,7 @@ export const config = {
   port: parseInt(parsed.data.PORT, 10),
   isDev: parsed.data.NODE_ENV === 'development',
   nodeEnv: parsed.data.NODE_ENV,
+  serviceJwtSecret: parsed.data.SERVICE_JWT_SECRET || process.env.SERVICE_JWT_SECRET,
 
   appwrite: {
     endpoint: parsed.data.APPWRITE_ENDPOINT,

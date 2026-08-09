@@ -12,6 +12,13 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
+import { z } from "zod";
+
+const newProjectSchema = z.object({
+  title: z.string().trim().min(1, "Title is required.").max(200),
+  description: z.string().trim().min(1, "Description is required.").max(5000),
+  category: z.string().trim().min(1, "Category is required.").max(100),
+});
 
 const CATEGORIES = ["Web Portals", "Websites", "Inventory Systems", "College Portals"];
 
@@ -33,8 +40,10 @@ export default function NewProjectPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setError("Image size should be less than 2MB");
+      const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+      if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) {
+        setError("Invalid file type or image size exceeds 2MB limit.");
         return;
       }
       setImageFile(file);
@@ -48,6 +57,11 @@ export default function NewProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = newProjectSchema.safeParse({ title, description, category });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid input.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
 

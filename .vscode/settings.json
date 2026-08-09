@@ -4,5 +4,6 @@
   "python.analysis.extraPaths": [
     "${workspaceFolder}/pipeline"
   ],
-  "python.analysis.typeCheckingMode": "basic"
+  "python.analysis.typeCheckingMode": "basic",
+  "pyrefly.pythonInterpreter": "${workspaceFolder}/pipeline/.venv/Scripts/python.exe"
 }
