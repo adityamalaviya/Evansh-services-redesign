@@ -5,6 +5,8 @@ import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api, formatApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { sanitizeImageUrl } from "@/lib/utils";
+import Image from "next/image";
 
 export default function ServicesAdminPage() {
   const router = useRouter();
@@ -118,8 +120,8 @@ export default function ServicesAdminPage() {
               className="w-full bg-slate-50 border border-slate-200 text-[#1E1E24] placeholder:text-slate-400 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/10 transition-all"
             />
             {image && (
-              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
-                <img src={image} alt="Service preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
+                <Image src={sanitizeImageUrl(image)} alt="Service preview" fill className="object-cover" unoptimized />
               </div>
             )}
           </div>

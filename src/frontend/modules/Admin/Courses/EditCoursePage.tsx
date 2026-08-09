@@ -6,6 +6,8 @@ import { Check, Plus, Trash, Image as ImageIcon, BookOpen, Star, ListChecks, War
 import { api, formatApiError } from "@/lib/api";
 import Link from "next/link";
 import { useAuth } from "@backend/contexts/AuthContext";
+import { sanitizeImageUrl } from "@/lib/utils";
+import Image from "next/image";
 
 interface Feature {
   title: string;
@@ -296,9 +298,8 @@ export default function EditCoursePage() {
               className={inputClass}
             />
             {form.cardImage && (
-              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
-                <img src={form.cardImage} alt="Card preview" className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
+                <Image src={sanitizeImageUrl(form.cardImage)} alt="Card preview" fill className="object-cover" unoptimized />
               </div>
             )}
           </div>
@@ -312,9 +313,8 @@ export default function EditCoursePage() {
               className={inputClass}
             />
             {form.heroImage && (
-              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-50">
-                <img src={form.heroImage} alt="Hero preview" className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-50">
+                <Image src={sanitizeImageUrl(form.heroImage)} alt="Hero preview" fill className="object-cover" unoptimized />
               </div>
             )}
           </div>
