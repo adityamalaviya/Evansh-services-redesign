@@ -5,6 +5,7 @@ import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, 
 import { api, formatApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { sanitizeImageUrl } from "@/lib/utils";
 
 interface Feature {
   title: string;
@@ -267,7 +268,7 @@ export default function CoursesAdminPage() {
             />
             {form.cardImage && (
               <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
-                <img src={form.cardImage} alt="Card preview" className="w-full h-full object-cover"
+                <img src={sanitizeImageUrl(form.cardImage)} alt="Card preview" className="w-full h-full object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
@@ -285,7 +286,7 @@ export default function CoursesAdminPage() {
             />
             {form.heroImage && (
               <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-50">
-                <img src={form.heroImage} alt="Hero preview" className="w-full h-full object-cover"
+                <img src={sanitizeImageUrl(form.heroImage)} alt="Hero preview" className="w-full h-full object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}

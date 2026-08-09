@@ -5,6 +5,7 @@ import { Check, Briefcase, Warning, ArrowLeft } from "@phosphor-icons/react";
 import { api, formatApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { sanitizeImageUrl } from "@/lib/utils";
 
 export default function ServicesAdminPage() {
   const router = useRouter();
@@ -119,7 +120,7 @@ export default function ServicesAdminPage() {
             />
             {image && (
               <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
-                <img src={image} alt="Service preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <img src={sanitizeImageUrl(image)} alt="Service preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
           </div>
