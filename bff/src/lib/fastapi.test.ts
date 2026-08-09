@@ -11,7 +11,7 @@ jest.mock('./logger', () => ({
   logger: { error: jest.fn() },
 }));
 
-const { callPipeline } = require('./fastapi') as typeof import('./fastapi');
+import { callPipeline } from './fastapi';
 
 describe('callPipeline', () => {
   afterEach(() => {
