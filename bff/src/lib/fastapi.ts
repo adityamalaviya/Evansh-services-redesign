@@ -1,5 +1,6 @@
 import { config } from '../config/env';
 import { logger } from './logger';
+import { generateServiceToken } from '../utils/serviceToken';
 
 interface PipelineRequestOptions {
   method?: string;
@@ -16,15 +17,21 @@ export async function callPipeline<T>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Service-Token': config.pipeline.serviceToken,
+    ...(requestId ? { 'X-Request-ID': requestId } : {}),
+  };
+
+  if (config.serviceJwtSecret) {
+    headers['Authorization'] = `Bearer ${generateServiceToken()}`;
+  }
+
   let res: Response;
   try {
     res = await fetch(url, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Service-Token': config.pipeline.serviceToken,
-        ...(requestId ? { 'X-Request-ID': requestId } : {}),
-      },
+      headers,
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });

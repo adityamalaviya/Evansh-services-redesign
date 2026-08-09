@@ -1,0 +1,7 @@
+# Pyrefly type checker configuration
+# https://github.com/facebook/pyrefly
+
+python_interpreter = ".venv/Scripts/python.exe"
+
+project_includes = ["app"]
+project_excludes = ["**/__pycache__", ".venv"]

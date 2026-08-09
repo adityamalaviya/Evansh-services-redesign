@@ -5,6 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { EnvelopeSimple, ArrowRight, ArrowLeft, CheckCircle } from "@phosphor-icons/react";
 import { account } from "@backend/services/appwrite";
+import { z } from "zod";
+
+const forgotPasswordSchema = z.object({
+  email: z.string().trim().email("Please enter a valid email address.").max(255),
+});
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +19,11 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = forgotPasswordSchema.safeParse({ email });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid email address.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
 

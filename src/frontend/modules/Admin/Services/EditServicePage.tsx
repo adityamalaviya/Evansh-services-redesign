@@ -20,6 +20,13 @@ interface ServiceForm {
   imageFile?: File | null;
 }
 
+import { z } from "zod";
+
+const editServiceSchema = z.object({
+  title: z.string().trim().min(1, "Service title is required.").max(200),
+  subtitle: z.string().trim().min(1, "Subtitle / description is required.").max(2000),
+});
+
 export default function EditServicePage() {
   const router = useRouter();
   const params = useParams();
@@ -59,6 +66,11 @@ export default function EditServicePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form) return;
+    const result = editServiceSchema.safeParse({ title: form.title, subtitle: form.subtitle });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid input.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
 
@@ -168,12 +180,18 @@ export default function EditServicePage() {
             <label className={labelClass}>Service Image</label>
             <input
               type="file"
-              accept="image/jpeg,image/png"
+              accept="image/jpeg,image/png,image/webp"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file && file.size <= 2 * 1024 * 1024) {
+                if (file) {
+                  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+                  const MAX_SIZE = 2 * 1024 * 1024;
+                  if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE) {
+                    setError("Image must be JPG, PNG, or WEBP and 2MB or smaller.");
+                    return;
+                  }
                   setForm((prev) => prev ? ({ ...prev, imageFile: file, image: URL.createObjectURL(file) }) : prev);
-                } else if (file) setError("Image must be JPG or PNG and 2MB or smaller.");
+                }
               }}
               className={inputClass}
             />

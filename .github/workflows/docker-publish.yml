@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Log in to GHCR
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
@@ -29,11 +29,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@c304028f5780d522475510286fc7a4a29b09b9d0 # v3.3.0
+        uses: docker/setup-buildx-action@b72836531952e4f00199e4ca20141fefbcfab983 # v3.10.0
 
       # ── Pipeline (FastAPI) ──────────────────────────────────────────────
       - name: Build & push pipeline
-        uses: docker/build-push-action@2cdde995de119a40fb0e2e21364403160e1d206a # v5.3.0
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:
           context: ./pipeline
           push: true
@@ -45,7 +45,7 @@ jobs:
 
       # ── BFF (Node/Hono) ────────────────────────────────────────────────
       - name: Build & push bff
-        uses: docker/build-push-action@2cdde995de119a40fb0e2e21364403160e1d206a # v5.3.0
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:
           context: ./bff
           push: true

@@ -17,6 +17,15 @@ import { Header, Footer } from "@frontend/components";
 import { api } from "@/lib/api";
 
 import { sendContactEmail } from "@backend/actions/email.actions";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required.").max(100),
+  email: z.string().trim().min(1, "Email is required.").email("Please enter a valid email.").max(255),
+  phone: z.string().trim().refine((val) => !val || /^[0-9+\-\s]{7,15}$/.test(val), "Please enter a valid phone number."),
+  subject: z.string().trim().min(1, "Subject is required.").max(200),
+  message: z.string().trim().min(1, "Message is required.").min(10, "Message must be at least 10 characters.").max(5000),
+});
 
 interface ContactFormData {
   name: string;
@@ -49,30 +58,20 @@ const ContactPage = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const validate = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required.";
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const newErrors: FormErrors = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof FormErrors;
+        if (field && !newErrors[field]) {
+          newErrors[field] = issue.message;
+        }
+      });
+      setErrors(newErrors);
+      return false;
     }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email.";
-    }
-    if (formData.phone.trim() && !/^[0-9+\-\s]{7,15}$/.test(formData.phone.trim())) {
-      newErrors.phone = "Please enter a valid phone number.";
-    }
-    if (!formData.subject.trim()) {
-      newErrors.subject = "Subject is required.";
-    }
-    if (!formData.message.trim()) {
-      newErrors.message = "Message is required.";
-    } else if (formData.message.trim().length < 10) {
-      newErrors.message = "Message must be at least 10 characters.";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
   const handleChange = (
