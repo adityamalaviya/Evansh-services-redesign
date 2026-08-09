@@ -5,6 +5,8 @@ import { Check, GraduationCap, Plus, Trash, Image as ImageIcon, BookOpen, Star, 
 import { api, formatApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { sanitizeImageUrl } from "@/lib/utils";
+import Image from "next/image";
 
 interface Feature {
   title: string;
@@ -266,9 +268,8 @@ export default function CoursesAdminPage() {
               className={inputClass}
             />
             {form.cardImage && (
-              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
-                <img src={form.cardImage} alt="Card preview" className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-50">
+                <Image src={sanitizeImageUrl(form.cardImage)} alt="Card preview" fill className="object-cover" unoptimized />
               </div>
             )}
             <p className="text-xs text-slate-400 pl-1">This image appears at the top of the internship card on the homepage.</p>
@@ -284,9 +285,8 @@ export default function CoursesAdminPage() {
               className={inputClass}
             />
             {form.heroImage && (
-              <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-50">
-                <img src={form.heroImage} alt="Hero preview" className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-50">
+                <Image src={sanitizeImageUrl(form.heroImage)} alt="Hero preview" fill className="object-cover" unoptimized />
               </div>
             )}
             <p className="text-xs text-slate-400 pl-1">This large illustration/image appears on the right side of the internship detail page.</p>
