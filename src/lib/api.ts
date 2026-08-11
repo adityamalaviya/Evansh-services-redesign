@@ -1,4 +1,4 @@
-import { account } from "@/backend/services/appwrite";
+import { account } from "@/lib/appwrite/client";
 import { publicEnv } from '@/lib/env';
 
 const BFF_BASE = publicEnv.bffUrl;

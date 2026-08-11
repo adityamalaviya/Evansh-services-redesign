@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { account } from "@backend/services/appwrite";
+import { account } from "@/lib/appwrite/client";
 import { Models, OAuthProvider } from "appwrite";
 
 interface AuthContextType {
@@ -55,8 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithOAuth = (provider: OAuthProvider) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    // createOAuth2Token passes userId+secret as URL params to the callback,
-    // which exchanges them for a real session via account.createSession().
     account.createOAuth2Token(
       provider,
       `${origin}/auth/callback`,
