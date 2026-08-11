@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b72836531952e4f00199e4ca20141fefbcfab983 # v3.10.0
+        uses: docker/setup-buildx-action@v3 # v3.10.0
 
       # ── Pipeline (FastAPI) ──────────────────────────────────────────────
       - name: Build & push pipeline
