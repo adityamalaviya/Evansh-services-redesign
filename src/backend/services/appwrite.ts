@@ -1,13 +1,8 @@
-import { Client, Account, Databases, ID } from 'appwrite';
-import { publicEnv } from '@/lib/env';
+import { Databases, ID } from 'appwrite';
+import { account, client } from '@/lib/appwrite/client';
 
-const client = new Client();
-client.setEndpoint(publicEnv.appwriteEndpoint);
-client.setProject(publicEnv.appwriteProjectId);
-
-export const account = new Account(client);
 export const databases = new Databases(client);
-export { client, ID };
+export { account, client, ID };
 
 // Database & Collection IDs — set these in Appwrite console
 // IMPORTANT: If projects are not showing, verify these IDs match your Appwrite Console exactly.
