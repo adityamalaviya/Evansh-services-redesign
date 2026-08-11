@@ -59,8 +59,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // which exchanges them for a real session via account.createSession().
     account.createOAuth2Token(
       provider,
-      `${origin}/auth/oauth-callback`,
-      `${origin}/login?oauth_error=1`
+      `${origin}/auth/callback`,
+      `${origin}/login?error=true`
     );
   };
 
