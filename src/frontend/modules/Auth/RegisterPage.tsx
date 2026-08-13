@@ -13,6 +13,14 @@ import { useRouter } from "next/navigation";
 import { account } from "@backend/services/appwrite";
 import { ID } from "appwrite";
 
+import { z } from "zod";
+
+const registerSchema = z.object({
+  name: z.string().trim().min(1, "Full name is required.").max(100),
+  email: z.string().trim().email("Please enter a valid email address.").max(255),
+  password: z.string().min(8, "Password must be at least 8 characters.").max(255),
+});
+
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -23,6 +31,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = registerSchema.safeParse({ name, email, password });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid input.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
     try {

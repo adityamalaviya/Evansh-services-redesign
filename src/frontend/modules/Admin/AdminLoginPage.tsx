@@ -6,6 +6,12 @@ import { EnvelopeSimple, LockKey, Eye, EyeSlash, Hexagon, ShieldWarning } from "
 import { useAuth } from "@backend/contexts/AuthContext";
 import { isAdmin } from "@backend/guards/adminGuard";
 import { publicEnv } from "@/lib/env";
+import { z } from "zod";
+
+const adminLoginSchema = z.object({
+  email: z.string().trim().email("Invalid email format.").max(255),
+  password: z.string().min(1, "Password is required.").max(255),
+});
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -33,6 +39,11 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = adminLoginSchema.safeParse({ email, password });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid input.");
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
 

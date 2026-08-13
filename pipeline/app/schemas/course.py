@@ -1,7 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CourseValidateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
     title: str = Field(..., min_length=2, max_length=200)
     subtitle: str = Field(..., min_length=2, max_length=300)
     short_description: str = Field(..., min_length=10, max_length=500)
@@ -12,5 +14,7 @@ class CourseValidateRequest(BaseModel):
 
 
 class CourseValidateResponse(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
     valid: bool
     errors: dict[str, list[str]] = {}

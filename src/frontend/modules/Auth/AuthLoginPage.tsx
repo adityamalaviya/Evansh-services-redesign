@@ -15,6 +15,13 @@ import { useAuth } from "@backend/contexts/AuthContext";
 import { publicEnv } from "@/lib/env";
 import { OAuthProvider } from "appwrite";
 
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().trim().email("Please enter a valid email address.").max(255),
+  password: z.string().min(1, "Password is required.").max(255),
+});
+
 export default function AuthLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,6 +57,11 @@ export default function AuthLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message || "Invalid input.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
     try {
