@@ -73,8 +73,8 @@ const Works: React.FC = () => {
           }));
           setDbProjects(fetchedProjects);
         }
-      } catch (err: any) {
-        console.warn("BFF projects fetch failed or timed out:", err);
+      } catch {
+        console.warn("BFF projects fetch failed or timed out");
       } finally {
         setLoading(false);
       }

@@ -1,6 +1,6 @@
 {
-  "pythonPath": "d:/Evansh_Project/pipeline/.venv/Scripts/python.exe",
-  "venvPath": "d:/Evansh_Project/pipeline",
+  "pythonPath": ".venv/Scripts/python.exe",
+  "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.11",
   "pythonPlatform": "Windows",

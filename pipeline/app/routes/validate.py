@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from pydantic import ValidationError
 from app.middleware.auth import verify_service_token
 from app.schemas.course import CourseValidateRequest, CourseValidateResponse
 from app.schemas.contact import ContactValidateRequest, ContactValidateResponse
@@ -9,46 +8,21 @@ from app.schemas.enrollment import EnrollmentValidateRequest, EnrollmentValidate
 router = APIRouter(dependencies=[Depends(verify_service_token)])
 
 
-def _extract_errors(exc: ValidationError) -> dict[str, list[str]]:
-    errors: dict[str, list[str]] = {}
-    for e in exc.errors():
-        field = ".".join(str(loc) for loc in e["loc"])
-        errors.setdefault(field, []).append(e["msg"])
-    return errors
-
-
 @router.post("/validate/course", response_model=CourseValidateResponse)
-async def validate_course(payload: dict) -> CourseValidateResponse:
-    try:
-        CourseValidateRequest(**payload)
-        return CourseValidateResponse(valid=True)
-    except ValidationError as exc:
-        return CourseValidateResponse(valid=False, errors=_extract_errors(exc))
+async def validate_course(payload: CourseValidateRequest) -> CourseValidateResponse:
+    return CourseValidateResponse(valid=True)
 
 
 @router.post("/validate/contact", response_model=ContactValidateResponse)
-async def validate_contact(payload: dict) -> ContactValidateResponse:
-    try:
-        ContactValidateRequest(**payload)
-        return ContactValidateResponse(valid=True)
-    except ValidationError as exc:
-        return ContactValidateResponse(valid=False, errors=_extract_errors(exc))
+async def validate_contact(payload: ContactValidateRequest) -> ContactValidateResponse:
+    return ContactValidateResponse(valid=True)
 
 
 @router.post("/validate/service", response_model=ServiceValidateResponse)
-async def validate_service(payload: dict) -> ServiceValidateResponse:
-    try:
-        ServiceValidateRequest(**payload)
-        return ServiceValidateResponse(valid=True)
-    except ValidationError as exc:
-        return ServiceValidateResponse(valid=False, errors=_extract_errors(exc))
+async def validate_service(payload: ServiceValidateRequest) -> ServiceValidateResponse:
+    return ServiceValidateResponse(valid=True)
 
 
 @router.post("/validate/enrollment", response_model=EnrollmentValidateResponse)
-async def validate_enrollment(payload: dict) -> EnrollmentValidateResponse:
-    try:
-        EnrollmentValidateRequest(**payload)
-        return EnrollmentValidateResponse(valid=True)
-    except ValidationError as exc:
-        return EnrollmentValidateResponse(valid=False, errors=_extract_errors(exc))
-
+async def validate_enrollment(payload: EnrollmentValidateRequest) -> EnrollmentValidateResponse:
+    return EnrollmentValidateResponse(valid=True)
