@@ -1,0 +1,51 @@
+# MANUAL STEP AFTER DEPLOY:
+# Set NEXT_PUBLIC_BFF_URL=https://evansh-bff.onrender.com in Vercel environment variables
+# for both Production and Preview environments.
+
+services:
+  - name: evansh-pipeline
+    type: web
+    env: docker
+    dockerfilePath: ./pipeline/Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PIPELINE_SERVICE_TOKEN
+        sync: false
+      - key: APPWRITE_ENDPOINT
+        sync: false
+      - key: APPWRITE_PROJECT_ID
+        sync: false
+      - key: APPWRITE_API_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+
+  - name: evansh-bff
+    type: web
+    env: docker
+    dockerfilePath: ./bff/Dockerfile
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PIPELINE_URL
+        sync: false
+      - key: PIPELINE_SERVICE_TOKEN
+        sync: false
+      - key: APPWRITE_ENDPOINT
+        sync: false
+      - key: APPWRITE_PROJECT_ID
+        sync: false
+      - key: APPWRITE_API_KEY
+        sync: false
+      - key: APPWRITE_DB_ID
+        sync: false
+      - key: APPWRITE_BUCKET_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false

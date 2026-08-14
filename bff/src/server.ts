@@ -72,7 +72,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(config.port, () => {
+app.listen(config.port, '0.0.0.0', () => {
   logger.info({ port: config.port, env: config.nodeEnv }, `🚀 BFF started`);
 });
 
