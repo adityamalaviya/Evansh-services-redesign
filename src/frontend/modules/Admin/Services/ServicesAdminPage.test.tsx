@@ -17,11 +17,12 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@backend/services/appwrite", () => ({
-  databases: { createDocument: vi.fn().mockResolvedValue({ $id: "1" }) },
-  DB_ID: "test-db",
-  SERVICES_COLLECTION_ID: "test-collection",
-  ID: { unique: () => "unique-id" },
+vi.mock("@/lib/api", () => ({
+  api: {
+    adminUploadImage: vi.fn(),
+    adminCreateService: vi.fn().mockResolvedValue({ id: "1" }),
+  },
+  formatApiError: (err: any, fallback: string) => fallback,
 }));
 
 function getImageUrlInput() {

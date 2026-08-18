@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { EnvelopeSimple, ArrowRight, ArrowLeft, CheckCircle } from "@phosphor-icons/react";
-import { account } from "@backend/services/appwrite";
+import { apiFetch } from "@/lib/api/client/apiFetch";
 import { z } from "zod";
 
 const forgotPasswordSchema = z.object({
@@ -28,9 +28,11 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      // Appwrite sends a reset link; redirect URL must be whitelisted in Appwrite console
       const resetUrl = `${window.location.origin}/reset-password`;
-      await account.createRecovery(email.trim(), resetUrl);
+      await apiFetch("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email: email.trim(), resetUrl }),
+      });
       setIsSuccess(true);
     } catch (err: unknown) {
       const message =

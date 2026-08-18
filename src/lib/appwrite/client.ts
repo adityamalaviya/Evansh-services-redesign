@@ -1,14 +1,3 @@
-import { Client, Account, Databases } from "appwrite";
-
-const client = new Client();
-
-const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "";
-const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
-
-if (endpoint && projectId) {
-  client.setEndpoint(endpoint).setProject(projectId);
-}
-
-export const account = new Account(client);
-export const databases = new Databases(client);
-export { client };
+// Deprecated: Direct Appwrite calls from frontend are forbidden.
+// All requests are routed through the BFF (Node.js/Express, port 3001) -> FastAPI.
+export {};
