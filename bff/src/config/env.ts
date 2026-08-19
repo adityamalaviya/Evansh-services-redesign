@@ -26,9 +26,6 @@ const schema = z.object({
 
   // Email
   RESEND_API_KEY: z.string().optional(),
-
-  // Cookies
-  COOKIE_SECRET: z.string().min(1),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -48,7 +45,6 @@ export const config = {
   port: parseInt(parsed.data.PORT, 10),
   isDev: parsed.data.NODE_ENV === 'development',
   nodeEnv: parsed.data.NODE_ENV,
-  cookieSecret: parsed.data.COOKIE_SECRET,
   serviceJwtSecret: parsed.data.SERVICE_JWT_SECRET || process.env.SERVICE_JWT_SECRET,
 
   appwrite: {

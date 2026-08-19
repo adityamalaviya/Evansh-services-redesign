@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LockKey, Eye, EyeSlash, ArrowRight, CheckCircle } from "@phosphor-icons/react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api/client/apiFetch";
+import { account } from "@backend/services/appwrite";
 import { z } from "zod";
 
 const resetPasswordSchema = z.object({
@@ -48,10 +48,7 @@ function ResetPasswordForm() {
     setIsSubmitting(true);
     setError(null);
     try {
-      await apiFetch("/auth/reset-password", {
-        method: "POST",
-        body: JSON.stringify({ userId, secret, password }),
-      });
+      await account.updateRecovery(userId, secret, password);
       setIsSuccess(true);
       setTimeout(() => router.push("/login"), 3000);
     } catch (err: unknown) {

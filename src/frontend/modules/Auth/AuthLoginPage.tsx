@@ -13,6 +13,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@backend/contexts/AuthContext";
 import { publicEnv } from "@/lib/env";
+import { OAuthProvider } from "appwrite";
 
 import { z } from "zod";
 
@@ -80,7 +81,11 @@ export default function AuthLoginPage() {
   };
 
   const handleSocialLogin = (label: string) => {
-    loginWithOAuth(label.toLowerCase() as "google" | "github");
+    const providers = {
+      Google: OAuthProvider.Google,
+      GitHub: OAuthProvider.Github,
+    } as const;
+    loginWithOAuth(providers[label as keyof typeof providers]);
   };
 
   return (

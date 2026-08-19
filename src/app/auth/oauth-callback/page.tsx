@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiFetch } from "@/lib/api/client/apiFetch";
+import { account } from "@backend/services/appwrite";
 import { publicEnv } from "@/lib/env";
 
 function OAuthCallbackInner() {
@@ -16,16 +16,13 @@ function OAuthCallbackInner() {
       const userId = searchParams.get("userId");
       const secret = searchParams.get("secret");
 
-      // Token flow: userId + secret in URL → exchange for session via BFF
+      // Token flow: userId + secret in URL → exchange for session
       if (userId && secret) {
         try {
           setStatus("Exchanging token…");
-          await apiFetch("/auth/callback", {
-            method: "POST",
-            body: JSON.stringify({ userId, secret }),
-          });
+          await account.createSession(userId, secret);
           setStatus("Getting user info…");
-          const user = await apiFetch<{ email?: string }>("/auth/me");
+          const user = await account.get();
           const isAdmin =
             user.email?.trim().toLowerCase() ===
             publicEnv.adminEmail.trim().toLowerCase();
@@ -38,13 +35,14 @@ function OAuthCallbackInner() {
         }
       }
 
-      // Cookie flow fallback: no URL params, try /auth/me directly via BFF
+      // Cookie flow fallback: no URL params, try account.get() directly
+      // (handles createOAuth2Session cookie-based flow)
       try {
         setStatus("Verifying session…");
         // Retry up to 5 times — cookie may take a moment to propagate
         for (let i = 0; i < 5; i++) {
           try {
-            const user = await apiFetch<{ email?: string }>("/auth/me");
+            const user = await account.get();
             const isAdmin =
               user.email?.trim().toLowerCase() ===
               publicEnv.adminEmail.trim().toLowerCase();
@@ -54,7 +52,7 @@ function OAuthCallbackInner() {
             if (i < 4) await new Promise((r) => setTimeout(r, 600));
           }
         }
-        setError("Login failed: no session found after OAuth redirect.");
+        setError("Login failed: no session found after OAuth redirect. Check Appwrite Console → Auth → Settings → OAuth2 providers and ensure the Web Platform (localhost:3000) is added under Settings → Platforms.");
       } catch (err: any) {
         setError(`Login failed: ${err?.message || "unknown error"}`);
       }

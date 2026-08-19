@@ -1,7 +1,11 @@
-// Deprecated: Direct Appwrite calls from frontend are forbidden.
-// All requests are routed through the BFF (Node.js/Express, port 3001) -> FastAPI.
-// Export placeholder constants if needed for backward compatibility during migration.
+import { Databases, ID } from 'appwrite';
+import { account, client } from '@/lib/appwrite/client';
 
+export const databases = new Databases(client);
+export { account, client, ID };
+
+// Database & Collection IDs — set these in Appwrite console
+// IMPORTANT: If projects are not showing, verify these IDs match your Appwrite Console exactly.
 export const DB_ID = process.env.NEXT_PUBLIC_APPWRITE_DB_ID || 'Evansh';
 export const PROJECTS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECTS_COLLECTION_ID || 'projects';
 export const INTERNSHIPS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_INTERNSHIPS_COLLECTION_ID || 'internships';
