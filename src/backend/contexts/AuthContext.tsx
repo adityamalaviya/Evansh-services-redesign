@@ -1,15 +1,22 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { account } from "@/lib/appwrite/client";
-import { Models, OAuthProvider } from "appwrite";
+import { apiFetch } from "@/lib/api/client/apiFetch";
+
+export type AuthUser = {
+  $id?: string;
+  id?: string;
+  email?: string;
+  name?: string;
+  [key: string]: any;
+};
 
 interface AuthContextType {
   isLoggedIn: boolean;
-  user: Models.User<Models.Preferences> | null;
+  user: AuthUser | null;
   login: (email: string, pass: string) => Promise<void>;
   loginWithGoogle: () => void;
-  loginWithOAuth: (provider: OAuthProvider) => void;
+  loginWithOAuth: (provider: string) => void;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -18,13 +25,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const currentUser = await account.get();
+        const currentUser = await apiFetch<AuthUser>("/auth/me");
         setUser(currentUser);
         setIsLoggedIn(true);
       } catch {
@@ -38,32 +45,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, pass: string) => {
-    try {
-      await account.deleteSession('current');
-    } catch {
-      // No active session — fine
-    }
-    await account.createEmailPasswordSession(email, pass);
-    const currentUser = await account.get();
+    const currentUser = await apiFetch<AuthUser>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password: pass }),
+    });
     setUser(currentUser);
     setIsLoggedIn(true);
   };
 
   const loginWithGoogle = () => {
-    loginWithOAuth(OAuthProvider.Google);
+    loginWithOAuth("google");
   };
 
-  const loginWithOAuth = (provider: OAuthProvider) => {
+  const loginWithOAuth = (provider: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    account.createOAuth2Token(
-      provider,
-      `${origin}/auth/callback`,
-      `${origin}/login?error=true`
-    );
+    const bffBase = process.env.NEXT_PUBLIC_BFF_URL ?? "http://localhost:3001";
+    // Redirect through BFF OAuth endpoint
+    window.location.href = `${bffBase}/auth/oauth/${provider}?redirect=${encodeURIComponent(`${origin}/auth/oauth-callback`)}`;
   };
 
   const logout = async () => {
-    await account.deleteSession('current');
+    try {
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch {
+      // Ignore logout network errors
+    }
     setUser(null);
     setIsLoggedIn(false);
   };

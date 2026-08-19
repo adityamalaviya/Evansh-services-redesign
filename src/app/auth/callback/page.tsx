@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { account } from "@/lib/appwrite/client";
+import { apiFetch } from "@/lib/api/client/apiFetch";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -13,8 +13,10 @@ export default function AuthCallback() {
       router.replace("/login?error=true");
       return;
     }
-    account
-      .createSession(userId, secret)
+    apiFetch("/auth/callback", {
+      method: "POST",
+      body: JSON.stringify({ userId, secret }),
+    })
       .then(() => router.replace("/dashboard"))
       .catch(() => router.replace("/login?error=true"));
   }, [router]);

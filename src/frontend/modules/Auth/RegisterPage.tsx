@@ -10,8 +10,7 @@ import {
   ArrowRight,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { account } from "@backend/services/appwrite";
-import { ID } from "appwrite";
+import { apiFetch } from "@/lib/api/client/apiFetch";
 
 import { z } from "zod";
 
@@ -39,8 +38,10 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      await account.create(ID.unique(), email, password, name);
-      await account.createEmailPasswordSession(email, password);
+      await apiFetch("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ name, email, password }),
+      });
       router.push("/");
     } catch (err: unknown) {
       console.error("Registration failed:", err);

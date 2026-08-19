@@ -1,4 +1,3 @@
-import { account } from "@/lib/appwrite/client";
 import { publicEnv } from '@/lib/env';
 
 const BFF_BASE = publicEnv.bffUrl;
@@ -7,27 +6,9 @@ interface ApiError {
   error: { code: string; message: string; fields?: Record<string, string[]> };
 }
 
-// ── Cache JWT to avoid generating it multiple times in quick succession ─────
-let cachedJwt: string | null = null;
-let cacheExpiry = 0;
-
+// ── Auth headers — cookies are handled via credentials: 'include' ───────────
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  try {
-    const now = Date.now();
-    if (cachedJwt && now < cacheExpiry) {
-      return { Authorization: `Bearer ${cachedJwt}` };
-    }
-
-    const session = await account.get().catch(() => null);
-    if (session) {
-      const { jwt } = await account.createJWT();
-      cachedJwt = jwt;
-      cacheExpiry = now + 4 * 60 * 1000; // JWT is valid for 15 mins, cache it for 4 mins
-      return { Authorization: `Bearer ${jwt}` };
-    }
-  } catch (err) {
-    // Guest or unauthenticated
-  }
+  // Session cookies forwarded automatically to BFF via credentials: 'include'
   return {};
 }
 
