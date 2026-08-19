@@ -40,6 +40,32 @@ app.use(
 
 // ── Core Middleware ───────────────────────────────────────────────────────────
 app.use(cookieParser(config.cookieSecret));
+
+import crypto from "crypto";
+import { Request, Response, NextFunction } from "express";
+
+function csrfMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    if (!req.signedCookies["csrf-token"]) {
+      const token = crypto.randomBytes(32).toString("hex");
+      res.cookie("csrf-token", token, {
+        httpOnly: false,
+        secure: true,
+        sameSite: "strict",
+        signed: true,
+      });
+    }
+    return next();
+  }
+  const cookieToken = req.signedCookies["csrf-token"];
+  const headerToken = req.headers["x-csrf-token"];
+  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+    return res.status(403).json({ error: "Invalid CSRF token" });
+  }
+  next();
+}
+
+app.use(csrfMiddleware);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestIdMiddleware);

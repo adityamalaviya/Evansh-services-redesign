@@ -28,7 +28,7 @@ const schema = z.object({
   RESEND_API_KEY: z.string().optional(),
 
   // Cookies
-  COOKIE_SECRET: z.string().min(1).default('change-me-to-a-long-random-string'),
+  COOKIE_SECRET: z.string().min(1),
 });
 
 const parsed = schema.safeParse(process.env);

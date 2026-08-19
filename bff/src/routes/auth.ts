@@ -40,7 +40,7 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const session = await serverAccount.createEmailPasswordSession(email, password);
-    res.cookie("appwrite-session", session.secret, { httpOnly: true, secure: true, sameSite: "strict", signed: true });
+    res.cookie("appwrite-session", session.$id, { httpOnly: true, secure: true, sameSite: "strict", signed: true });
     res.json({ success: true });
   } catch (e: any) {
     res.status(401).json({ error: e.message });
@@ -68,7 +68,7 @@ router.post("/register", async (req, res) => {
   try {
     await serverAccount.create(ID.unique(), email, password, name);
     const session = await serverAccount.createEmailPasswordSession(email, password);
-    res.cookie("appwrite-session", session.secret, { httpOnly: true, secure: true, sameSite: "strict", signed: true });
+    res.cookie("appwrite-session", session.$id, { httpOnly: true, secure: true, sameSite: "strict", signed: true });
     res.json({ success: true });
   } catch (e: any) {
     res.status(400).json({ error: e.message });
@@ -92,7 +92,7 @@ router.post("/callback", async (req, res) => {
       .setEndpoint(config.appwrite.endpoint)
       .setProject(config.appwrite.projectId);
     const session = await new Account(sessionClient).createSession(userId, secret);
-    res.cookie("appwrite-session", session.secret, { httpOnly: true, secure: true, sameSite: "strict", signed: true });
+    res.cookie("appwrite-session", session.$id, { httpOnly: true, secure: true, sameSite: "strict", signed: true });
     res.json({ success: true });
   } catch (e: any) {
     res.status(400).json({ error: e.message });
