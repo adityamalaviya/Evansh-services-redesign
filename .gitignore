@@ -7,9 +7,11 @@ dist/
 .env.*.local
 .next/
 backend/.env
-backend/__pycache__/
+__pycache__/
 *.pyc
+.pnpm-store/
 pipeline/.venv/
 pipeline/.env
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+

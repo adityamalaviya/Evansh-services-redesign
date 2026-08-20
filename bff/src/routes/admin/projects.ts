@@ -6,11 +6,7 @@ import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
 import { logger } from '../../lib/logger';
 import { config } from '../../config/env';
-
-import { authMiddleware } from '../../middleware/authMiddleware';
-
 const router = Router();
-router.use(authMiddleware);
 
 // Multer: store file in memory for upload to Appwrite
 const upload = multer({

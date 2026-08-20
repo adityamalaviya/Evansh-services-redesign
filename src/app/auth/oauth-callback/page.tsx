@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { account } from "@backend/services/appwrite";
+import { account } from "@/lib/appwrite/client";
 import { publicEnv } from "@/lib/env";
 
 function OAuthCallbackInner() {

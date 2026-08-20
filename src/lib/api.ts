@@ -31,16 +31,15 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+// ponytail: unified fetch handler handles JSON and FormData without duplicated error parsing
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const authHeaders = await getAuthHeaders();
+  const isFormData = options.body instanceof FormData;
   const res = await fetch(`${BFF_BASE}${path}`, {
     ...options,
-    credentials: 'include', // forward session cookie to BFF if any
+    credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...authHeaders,
       ...options.headers,
     },
@@ -57,38 +56,12 @@ async function request<T>(
     });
   }
 
-  // 204 No Content
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
-// ── Multipart (file upload) helper ──────────────────────────────────────────
-async function requestForm<T>(path: string, formData: FormData, method = 'POST'): Promise<T> {
-  const authHeaders = await getAuthHeaders();
-  const res = await fetch(`${BFF_BASE}${path}`, {
-    method,
-    credentials: 'include',
-    body: formData,
-    headers: {
-      ...authHeaders,
-      // Do NOT set Content-Type — browser sets it with boundary for multipart
-    },
-  });
-
-  if (!res.ok) {
-    const err: ApiError = await res.json().catch(() => ({
-      error: { code: 'NETWORK_ERROR', message: 'A network error occurred.' },
-    }));
-    throw Object.assign(new Error(err.error.message), {
-      code: err.error.code,
-      fields: err.error.fields,
-      status: res.status,
-    });
-  }
-
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
-}
+const requestForm = <T>(path: string, formData: FormData, method = 'POST'): Promise<T> =>
+  request<T>(path, { method, body: formData });
 
 export function formatApiError(err: any, fallback: string): string {
   if (err?.status === 401) {

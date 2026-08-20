@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LockKey, Eye, EyeSlash, ArrowRight, CheckCircle } from "@phosphor-icons/react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { account } from "@backend/services/appwrite";
+import { account } from "@/lib/appwrite/client";
 import { z } from "zod";
 
 const resetPasswordSchema = z.object({

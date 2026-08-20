@@ -16,7 +16,6 @@ import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
 import { api } from "@/lib/api";
 
-import { sendContactEmail } from "@backend/actions/email.actions";
 import { z } from "zod";
 
 const contactSchema = z.object({
@@ -94,15 +93,6 @@ const ContactPage = () => {
 
     try {
       await api.submitContact({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || "",
-        subject: formData.subject.trim(),
-        message: formData.message.trim(),
-      });
-
-      // Send Email Notification
-      await sendContactEmail({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || "",

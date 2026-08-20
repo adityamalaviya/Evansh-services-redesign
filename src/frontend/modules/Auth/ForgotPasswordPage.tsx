@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { EnvelopeSimple, ArrowRight, ArrowLeft, CheckCircle } from "@phosphor-icons/react";
-import { account } from "@backend/services/appwrite";
+import { account } from "@/lib/appwrite/client";
 import { z } from "zod";
 
 const forgotPasswordSchema = z.object({
