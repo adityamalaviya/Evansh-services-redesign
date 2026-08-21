@@ -1,8 +1,10 @@
 process.env.APPWRITE_ENDPOINT = 'https://example.com/v1';
 process.env.APPWRITE_PROJECT_ID = 'test-project';
+process.env.APPWRITE_API_KEY = 'test-api-key';
 process.env.APPWRITE_DB_ID = 'test-db';
 process.env.APPWRITE_BUCKET_ID = 'test-bucket';
 process.env.ADMIN_EMAIL = 'admin@example.com';
+process.env.PIPELINE_SERVICE_TOKEN = '12345678901234567890123456789012';
 process.env.PIPELINE_URL = 'http://pipeline.test';
 
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
