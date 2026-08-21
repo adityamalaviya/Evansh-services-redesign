@@ -1,0 +1,30 @@
+﻿{
+  "@types/uuid": {
+    "current": "11.0.0",
+    "wanted": "11.0.0",
+    "latest": "10.0.0",
+    "dependent": "bff",
+    "location": "D:\\Evansh-services-redesign\\bff\\node_modules\\@types\\uuid"
+  },
+  "node-appwrite": {
+    "current": "26.2.0",
+    "wanted": "26.2.0",
+    "latest": "28.0.0",
+    "dependent": "bff",
+    "location": "D:\\Evansh-services-redesign\\bff\\node_modules\\node-appwrite"
+  },
+  "typescript": {
+    "current": "6.0.3",
+    "wanted": "6.0.3",
+    "latest": "7.0.2",
+    "dependent": "bff",
+    "location": "D:\\Evansh-services-redesign\\bff\\node_modules\\typescript"
+  },
+  "zod": {
+    "current": "3.25.76",
+    "wanted": "3.25.76",
+    "latest": "4.4.3",
+    "dependent": "bff",
+    "location": "D:\\Evansh-services-redesign\\bff\\node_modules\\zod"
+  }
+}

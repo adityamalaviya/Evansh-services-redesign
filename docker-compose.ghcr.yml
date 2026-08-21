@@ -21,8 +21,9 @@ services:
 
   pipeline:
     image: ghcr.io/adityamalaviya/evansh-pipeline:latest
-    ports:
-      - "8000:8000"
+    # ponytail: no ports: — pipeline must NOT be published to the host.
+    # Docker iptables injection bypasses UFW; publishing here = public internet exposure.
+    # BFF reaches pipeline via internal bridge at http://pipeline:8000 — no host binding needed.
     env_file:
       - ./pipeline/.env
       - ./bff/.env
