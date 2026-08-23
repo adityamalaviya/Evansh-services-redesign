@@ -15,11 +15,11 @@ import { tokens } from "@frontend/styles/tokens";
 import TeamMemberCard from "./Components/TeamMemberCard";
 
 const teamMembers = [
-  { name: "Daksh Ahir", role: "Frontend Developer" },
-  { name: "Ruturaj Patel", role: "Backend Developer" },
-  { name: "Meet Gajjar", role: "UI/UX Designer" },
-  { name: "Krupal Shah", role: "Content Creator" },
-  { name: "Heena Solanki", role: "Digital Marketer" }
+  { name: "Daksh Ahir", role: "Frontend Developer", linkedinUrl: "https://www.linkedin.com/in/daksh-ahir-759a863a7/" },
+  { name: "Kunal Solanki", role: "Backend Developer", linkedinUrl: "https://www.linkedin.com/in/kunal-solanki-3093613a8/" },
+  { name: "Bhoomi Sumbad", role: "Database Administrator", linkedinUrl: "https://www.linkedin.com/in/bhoomi-sumbad-1131683ba/" },
+  { name: "Shubham Kumar", role: "Api Developer", linkedinUrl: "https://www.linkedin.com/in/shubham-singh-7b72a23b5/" },
+  { name: "Aditya Malaviya", role: "Security Developer", linkedinUrl: "https://www.linkedin.com/in/aditya-malaviya-360822401/" }
 ];
 
 const AboutPage = () => {
@@ -189,6 +189,7 @@ const AboutPage = () => {
                     key={i}
                     name={member.name}
                     role={member.role}
+                    linkedinUrl={member.linkedinUrl}
                   />
                 ))}
               </div>

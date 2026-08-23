@@ -39,21 +39,16 @@ export default function TeamMemberCard({
         {role}
       </p>
 
-      {/* Short teal underline divider */}
-      <div className="w-8 h-1 bg-[#14B8A6] rounded-full mb-2"></div>
-
-      {/* Optional LinkedIn Slot - not rendered if linkedinUrl is absent */}
-      {linkedinUrl && (
-        <a
-          href={linkedinUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#14B8A6] hover:text-slate-800 transition-colors mt-2 p-1"
-          aria-label={`${name}'s LinkedIn profile`}
-        >
-          <LinkedinLogo size={24} weight="fill" />
-        </a>
-      )}
+      {/* Clickable LinkedIn Logo replacing previous dash divider */}
+      <a
+        href={linkedinUrl || "https://www.linkedin.com"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-8 h-8 rounded-full flex items-center justify-center text-[#14B8A6] hover:bg-teal-50 hover:text-[#0A66C2] transition-all hover:scale-110"
+        aria-label={`${name}'s LinkedIn profile`}
+      >
+        <LinkedinLogo size={24} weight="fill" />
+      </a>
     </div>
   );
 }

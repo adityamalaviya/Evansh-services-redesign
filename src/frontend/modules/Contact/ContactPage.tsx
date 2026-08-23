@@ -11,6 +11,7 @@ import {
   PaperPlaneRight,
   CheckCircle,
   Warning,
+  CaretDown,
 } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { Header, Footer } from "@frontend/components";
@@ -22,7 +23,7 @@ const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required.").max(100),
   email: z.string().trim().min(1, "Email is required.").email("Please enter a valid email.").max(255),
   phone: z.string().trim().refine((val) => !val || /^[0-9+\-\s]{7,15}$/.test(val), "Please enter a valid phone number."),
-  subject: z.string().trim().min(1, "Subject is required.").max(200),
+  subject: z.string().trim().min(1, "Please select a subject.").max(200),
   message: z.string().trim().min(1, "Message is required.").min(10, "Message must be at least 10 characters.").max(5000),
 });
 
@@ -74,7 +75,7 @@ const ContactPage = () => {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -255,30 +256,36 @@ const ContactPage = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <input
-                      id="contact-subject"
-                      type="text"
-                      name="subject"
-                      placeholder="Subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className={inputClass("subject")}
-                    />
-                    {errors.subject && (
-                      <p className="text-red-500 text-xs pl-1">{errors.subject}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <input
-                      id="contact-subject"
-                      type="text"
-                      name="subject"
-                      placeholder="Subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className={inputClass("subject")}
-                    />
+                    <div className="relative">
+                      <select
+                        id="contact-subject"
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleChange}
+                        className={`${inputClass("subject")} appearance-none cursor-pointer pr-10 ${
+                          !formData.subject ? "text-slate-400" : "text-slate-900"
+                        }`}
+                      >
+                        <option value="" disabled className="text-slate-400">
+                          Select Subject
+                        </option>
+                        <option value="Web Portal" className="text-slate-900">
+                          Web Portal
+                        </option>
+                        <option value="Website" className="text-slate-900">
+                          Website
+                        </option>
+                        <option value="Inventory System" className="text-slate-900">
+                          Inventory System
+                        </option>
+                        <option value="College Portal" className="text-slate-900">
+                          College Portal
+                        </option>
+                      </select>
+                      <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                        <CaretDown size={18} weight="bold" />
+                      </div>
+                    </div>
                     {errors.subject && (
                       <p className="text-red-500 text-xs pl-1">{errors.subject}</p>
                     )}
