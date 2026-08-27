@@ -26,11 +26,19 @@ export default function AuthLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, loginWithOAuth, isLoggedIn, isLoading, user } = useAuth();
-  const [email, setEmail] = useState("");
+  const initialEmail = searchParams.get("email") || "";
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const qEmail = searchParams.get("email");
+    if (qEmail) {
+      setEmail(qEmail);
+    }
+  }, [searchParams]);
 
   // Build the post-login redirect URL (preserving ?course= if present)
   const getRedirectUrl = (isAdmin: boolean): string => {
