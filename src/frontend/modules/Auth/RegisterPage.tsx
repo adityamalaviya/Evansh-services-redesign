@@ -40,9 +40,9 @@ export default function RegisterPage() {
   useEffect(() => {
     if (!isLoading && isLoggedIn && user) {
       const redirectPath = searchParams.get("redirect") || "/";
-      router.push(redirectPath);
+      window.location.href = redirectPath;
     }
-  }, [isLoading, isLoggedIn, user, router, searchParams]);
+  }, [isLoading, isLoggedIn, user, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +61,7 @@ export default function RegisterPage() {
       await registerUser(name, email, password);
 
       const redirectPath = searchParams.get("redirect") || "/";
-      router.push(redirectPath);
+      window.location.href = redirectPath;
     } catch (err: unknown) {
       console.error("Registration failed:", err);
       let errorMsg = "Registration failed. Please check your details and try again.";
