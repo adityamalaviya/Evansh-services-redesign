@@ -10,13 +10,17 @@ export default function AuthCallback() {
     const userId = params.get("userId");
     const secret = params.get("secret");
     if (!userId || !secret) {
-      router.replace("/login?error=true");
+      window.location.href = "/login?error=true";
       return;
     }
     account
       .createSession(userId, secret)
-      .then(() => router.replace("/dashboard"))
-      .catch(() => router.replace("/login?error=true"));
-  }, [router]);
+      .then(() => {
+        window.location.href = "/";
+      })
+      .catch(() => {
+        window.location.href = "/login?error=true";
+      });
+  }, []);
   return <p>Signing you in...</p>;
 }

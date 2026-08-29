@@ -26,7 +26,8 @@ function OAuthCallbackInner() {
           const isAdmin =
             user.email?.trim().toLowerCase() ===
             publicEnv.adminEmail.trim().toLowerCase();
-          router.replace(isAdmin ? "/admin" : "/");
+          const targetUrl = isAdmin ? "/admin" : "/";
+          window.location.href = targetUrl;
           return;
         } catch (err: any) {
           console.error("Token exchange failed:", err);
@@ -46,7 +47,8 @@ function OAuthCallbackInner() {
             const isAdmin =
               user.email?.trim().toLowerCase() ===
               publicEnv.adminEmail.trim().toLowerCase();
-            router.replace(isAdmin ? "/admin" : "/");
+            const targetUrl = isAdmin ? "/admin" : "/";
+            window.location.href = targetUrl;
             return;
           } catch {
             if (i < 4) await new Promise((r) => setTimeout(r, 600));

@@ -58,10 +58,10 @@ export default function AuthLoginPage() {
     if (!isLoading && isLoggedIn && user) {
       const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
       const isAdmin = user.email?.trim().toLowerCase() === adminEmail;
-      router.push(getRedirectUrl(isAdmin));
+      window.location.href = getRedirectUrl(isAdmin);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, isLoggedIn, user, router]);
+  }, [isLoading, isLoggedIn, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +78,7 @@ export default function AuthLoginPage() {
       // Redirect: admin → /admin, everyone else → redirect param or home
       const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
       const isAdmin = email.trim().toLowerCase() === adminEmail;
-      router.push(getRedirectUrl(isAdmin));
+      window.location.href = getRedirectUrl(isAdmin);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Invalid email or password. Please try again.";
       console.error("Login failed:", err);
