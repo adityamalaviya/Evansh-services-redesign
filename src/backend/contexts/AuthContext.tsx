@@ -1,13 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { account } from "@/lib/appwrite/client";
+import { account, ID } from "@/lib/appwrite/client";
 import { Models, OAuthProvider } from "appwrite";
 
 interface AuthContextType {
   isLoggedIn: boolean;
   user: Models.User<Models.Preferences> | null;
   login: (email: string, pass: string) => Promise<void>;
+  register: (name: string, email: string, pass: string) => Promise<void>;
   loginWithGoogle: () => void;
   loginWithOAuth: (provider: OAuthProvider) => void;
   logout: () => Promise<void>;
@@ -43,7 +44,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // No active session — fine
     }
-    await account.createEmailPasswordSession(email, pass);
+    await account.createEmailPasswordSession(email.trim(), pass);
+    const currentUser = await account.get();
+    setUser(currentUser);
+    setIsLoggedIn(true);
+  };
+
+  const register = async (name: string, email: string, pass: string) => {
+    try {
+      await account.deleteSession('current');
+    } catch {
+      // No active session — fine
+    }
+    await account.create({
+      userId: ID.unique(),
+      email: email.trim(),
+      password: pass,
+      name: name.trim(),
+    });
+    await account.createEmailPasswordSession(email.trim(), pass);
     const currentUser = await account.get();
     setUser(currentUser);
     setIsLoggedIn(true);
@@ -69,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, loginWithGoogle, loginWithOAuth, logout, isLoading }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, register, loginWithGoogle, loginWithOAuth, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

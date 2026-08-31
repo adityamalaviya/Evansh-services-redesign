@@ -26,7 +26,7 @@ const registerSchema = z.object({
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { loginWithOAuth, isLoggedIn, isLoading, user } = useAuth();
+  const { register: registerUser, loginWithOAuth, isLoggedIn, isLoading, user } = useAuth();
   
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,59 +34,73 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isExistingUser, setIsExistingUser] = useState(false);
 
   // If already logged in, redirect home or to destination
   useEffect(() => {
     if (!isLoading && isLoggedIn && user) {
       const redirectPath = searchParams.get("redirect") || "/";
-      router.push(redirectPath);
+      window.location.href = redirectPath;
     }
-  }, [isLoading, isLoggedIn, user, router, searchParams]);
+  }, [isLoading, isLoggedIn, user, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = registerSchema.safeParse({ name, email, password });
     if (!result.success) {
       setError(result.error.issues[0]?.message || "Invalid input.");
+      setIsExistingUser(false);
       return;
     }
 
     setIsSubmitting(true);
     setError(null);
+    setIsExistingUser(false);
 
     try {
-      // Clear any existing session to prevent 401/conflict when registering a new user
-      try {
-        await account.deleteSession("current");
-      } catch {
-        // No active session — ignore
-      }
-
-      // Create new Appwrite user account
-      await account.create(ID.unique(), email.trim(), password, name.trim());
-
-      // Create session for the new user
-      await account.createEmailPasswordSession(email.trim(), password);
+      await registerUser(name, email, password);
 
       const redirectPath = searchParams.get("redirect") || "/";
-      router.push(redirectPath);
+      window.location.href = redirectPath;
     } catch (err: unknown) {
       console.error("Registration failed:", err);
       let errorMsg = "Registration failed. Please check your details and try again.";
+      let userExists = false;
 
-      if (err instanceof Error) {
-        const lowerMsg = err.message.toLowerCase();
-        if (lowerMsg.includes("already exists") || lowerMsg.includes("user_already_exists") || (err as { code?: number }).code === 409) {
+      if (err && typeof err === "object") {
+        const appwriteErr = err as { code?: number; type?: string; message?: string };
+        const lowerMsg = (appwriteErr.message || "").toLowerCase();
+        const type = (appwriteErr.type || "").toLowerCase();
+        const code = appwriteErr.code;
+
+        if (
+          code === 409 ||
+          type.includes("user_already_exists") ||
+          type.includes("user_email_already_exists") ||
+          lowerMsg.includes("already exists") ||
+          lowerMsg.includes("user_already_exists")
+        ) {
           errorMsg = "An account with this email already exists. Please login instead.";
-        } else if (lowerMsg.includes("password") && (lowerMsg.includes("short") || lowerMsg.includes("weak") || lowerMsg.includes("characters"))) {
-          errorMsg = "Password must be at least 8 characters long and not commonly used.";
-        } else if (lowerMsg.includes("rate") || lowerMsg.includes("limit")) {
+          userExists = true;
+        } else if (
+          type.includes("password") ||
+          (lowerMsg.includes("password") && (lowerMsg.includes("short") || lowerMsg.includes("weak") || lowerMsg.includes("characters") || lowerMsg.includes("least")))
+        ) {
+          errorMsg = "Password must be at least 8 characters long and sufficiently secure.";
+        } else if (code === 429 || type.includes("rate_limit") || lowerMsg.includes("rate") || lowerMsg.includes("limit")) {
           errorMsg = "Too many attempts. Please wait a moment and try again.";
-        } else if (err.message) {
-          errorMsg = err.message;
+        } else if (type.includes("user_auth_method_unsupported")) {
+          errorMsg = "Email/Password registration is currently disabled in system settings.";
+        } else if (appwriteErr.message && !lowerMsg.includes("processing your request")) {
+          errorMsg = appwriteErr.message;
+        } else if (lowerMsg.includes("processing your request")) {
+          // Generic Appwrite error often occurs if user already exists or inputs failed Appwrite rules
+          errorMsg = "Registration could not be completed. If you already have an account, please log in.";
+          userExists = true;
         }
       }
       setError(errorMsg);
+      setIsExistingUser(userExists);
     } finally {
       setIsSubmitting(false);
     }
@@ -165,8 +179,17 @@ export default function RegisterPage() {
               </div>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-medium border border-red-100 animate-in fade-in slide-in-from-top-1">
-                  {error}
+                <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-medium border border-red-100 animate-in fade-in slide-in-from-top-1 flex flex-col gap-2">
+                  <p>{error}</p>
+                  {isExistingUser && (
+                    <Link
+                      href={`/login?email=${encodeURIComponent(email.trim())}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#14b8a6] hover:text-[#0d9488] underline underline-offset-2 transition-colors w-fit"
+                    >
+                      <span>Click here to Login with this email</span>
+                      <ArrowRight size={14} weight="bold" />
+                    </Link>
+                  )}
                 </div>
               )}
 
