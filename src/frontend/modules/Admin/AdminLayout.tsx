@@ -1,4 +1,4 @@
-"use client";
++"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -65,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
+    <div className="h-screen bg-[#F8FAFC] flex overflow-hidden">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -77,10 +77,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-screen w-64 bg-white border-r border-slate-200 z-30 flex flex-col transition-transform duration-300 shadow-sm
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:z-auto`}
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:z-auto`}
       >
         {/* Logo */}
-        <div className="p-5 border-b border-slate-100 flex items-center gap-3">
+        <div className="p-5 border-b border-slate-100 flex items-center gap-3 shrink-0">
           <div className="bg-[#14B8A6] p-2 rounded-xl flex-shrink-0">
             <Hexagon size={22} weight="fill" className="text-white" />
           </div>
@@ -119,7 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Back to Home + Logout */}
-        <div className="p-4 border-t border-slate-100 space-y-1">
+        <div className="p-4 border-t border-slate-100 space-y-1 shrink-0">
           <Link
             href="/"
             onClick={() => setSidebarOpen(false)}
@@ -139,9 +139,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Bar (Mobile) */}
-        <header className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm">
+        <header className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-slate-500 hover:text-[#1E1E24] p-1"

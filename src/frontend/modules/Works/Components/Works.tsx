@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Globe, Laptop, Database, GraduationCap, DotsThreeOutline, Image as ImageIcon } from "@phosphor-icons/react";
+import { ArrowRight, Globe, Laptop, Database, GraduationCap, Image as ImageIcon } from "@phosphor-icons/react";
 import { tokens } from "@frontend/styles/tokens";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
@@ -23,7 +23,6 @@ const categories = [
   { name: "Websites", icon: <Globe size={18} /> },
   { name: "Inventory Systems", icon: <Database size={18} /> },
   { name: "College Portals", icon: <GraduationCap size={18} /> },
-  { name: "Other Projects", icon: <DotsThreeOutline size={18} /> },
 ];
 
 const Works: React.FC = () => {
