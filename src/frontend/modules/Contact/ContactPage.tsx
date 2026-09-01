@@ -22,7 +22,11 @@ import { z } from "zod";
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required.").max(100),
   email: z.string().trim().min(1, "Email is required.").email("Please enter a valid email.").max(255),
-  phone: z.string().trim().refine((val) => !val || /^[0-9+\-\s]{7,15}$/.test(val), "Please enter a valid phone number."),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required.")
+    .regex(/^[0-9+\-\s()]{7,20}$/, "Please enter a valid phone number."),
   subject: z.string().trim().min(1, "Please select a subject.").max(200),
   message: z.string().trim().min(1, "Message is required.").min(10, "Message must be at least 10 characters.").max(5000),
 });
@@ -248,7 +252,7 @@ const ContactPage = () => {
                       id="contact-phone"
                       type="tel"
                       name="phone"
-                      placeholder="Phone Number (optional)"
+                      placeholder="Phone Number *"
                       value={formData.phone}
                       onChange={handleChange}
                       className={inputClass("phone")}
