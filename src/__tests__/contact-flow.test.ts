@@ -82,3 +82,44 @@ describe('Contact Form & Admin Messages Flow', () => {
     );
   });
 });
+
+import {
+  getSeenMessageIds,
+  markMessageAsSeen,
+  markAllMessagesAsSeen,
+  getUnseenCount,
+} from '@/frontend/utils/messageTracker';
+
+describe('Message Tracker Utility', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('returns 0 when messages array is empty', () => {
+    expect(getUnseenCount([])).toBe(0);
+  });
+
+  it('returns full count when no messages are marked as seen', () => {
+    const messages = [{ $id: 'm1' }, { $id: 'm2' }, { $id: 'm3' }];
+    expect(getUnseenCount(messages)).toBe(3);
+  });
+
+  it('returns correct unseen count when some messages are seen', () => {
+    const messages = [{ $id: 'm1' }, { $id: 'm2' }, { $id: 'm3' }];
+    markMessageAsSeen('m1');
+    expect(getUnseenCount(messages)).toBe(2);
+  });
+
+  it('returns 0 when all messages are marked as seen', () => {
+    const messages = [{ $id: 'm1' }, { $id: 'm2' }];
+    markAllMessagesAsSeen(['m1', 'm2']);
+    expect(getUnseenCount(messages)).toBe(0);
+  });
+
+  it('persists seen IDs in localStorage', () => {
+    markMessageAsSeen('m_abc');
+    const seen = getSeenMessageIds();
+    expect(seen.has('m_abc')).toBe(true);
+  });
+});
+

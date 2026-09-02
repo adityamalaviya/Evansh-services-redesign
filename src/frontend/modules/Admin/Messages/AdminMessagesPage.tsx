@@ -4,6 +4,11 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { api, formatApiError } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
 import {
+  getSeenMessageIds,
+  markMessageAsSeen,
+  markAllMessagesAsSeen,
+} from "@frontend/utils/messageTracker";
+import {
   Envelope,
   Trash,
   MagnifyingGlass,
@@ -14,6 +19,7 @@ import {
   ArrowLeft,
   Copy,
   Check,
+  CheckCircle,
   PaperPlaneRight,
 } from "@phosphor-icons/react";
 
@@ -36,6 +42,11 @@ export default function AdminMessagesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setSeenIds(getSeenMessageIds());
+  }, []);
 
   const fetchMessages = useCallback(async () => {
     setIsLoading(true);
@@ -43,6 +54,7 @@ export default function AdminMessagesPage() {
     try {
       const res = await api.adminGetContacts();
       setMessages(res.messages || []);
+      setSeenIds(getSeenMessageIds());
     } catch (err: any) {
       setError(formatApiError(err, "Could not load messages. Please check connection."));
     } finally {
@@ -71,6 +83,18 @@ export default function AdminMessagesPage() {
       setSelectedMessage(updated);
     }
   }, [messages, selectedMessage]);
+
+  const handleSelectMessage = (msg: MessageDocument) => {
+    setSelectedMessage(msg);
+    markMessageAsSeen(msg.$id);
+    setSeenIds((prev) => new Set([...prev, msg.$id]));
+  };
+
+  const handleMarkAllRead = () => {
+    const allIds = messages.map((m) => m.$id);
+    markAllMessagesAsSeen(allIds);
+    setSeenIds(new Set(allIds));
+  };
 
   const handleDelete = async (msg: MessageDocument, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -108,6 +132,10 @@ export default function AdminMessagesPage() {
     );
   }, [messages, search]);
 
+  const unseenCount = useMemo(() => {
+    return messages.filter((m) => !seenIds.has(m.$id)).length;
+  }, [messages, seenIds]);
+
   const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
@@ -132,19 +160,35 @@ export default function AdminMessagesPage() {
           <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
             <Envelope size={28} className="text-[#14B8A6]" weight="duotone" />
             User Messages
+            {unseenCount > 0 && (
+              <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2.5 py-0.5 rounded-full border border-purple-200 ml-1">
+                {unseenCount} new
+              </span>
+            )}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Manage and respond to contact form inquiries submitted by users.
           </p>
         </div>
-        <button
-          onClick={fetchMessages}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 text-slate-600 font-semibold text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-        >
-          <ArrowClockwise size={18} className={isLoading ? "animate-spin" : ""} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {unseenCount > 0 && (
+            <button
+              onClick={handleMarkAllRead}
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-purple-200 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs transition-all"
+            >
+              <CheckCircle size={16} weight="bold" />
+              Mark all as read
+            </button>
+          )}
+          <button
+            onClick={fetchMessages}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 text-slate-600 font-semibold text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+          >
+            <ArrowClockwise size={18} className={isLoading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -200,18 +244,24 @@ export default function AdminMessagesPage() {
             ) : (
               filteredMessages.map((msg) => {
                 const isSelected = selectedMessage?.$id === msg.$id;
+                const isUnseen = !seenIds.has(msg.$id);
                 return (
                   <div
                     key={msg.$id}
-                    onClick={() => setSelectedMessage(msg)}
+                    onClick={() => handleSelectMessage(msg)}
                     className={`p-4 cursor-pointer transition-all flex flex-col gap-2 relative ${
                       isSelected
                         ? "bg-teal-50/40 border-l-4 border-l-[#14B8A6]"
+                        : isUnseen
+                        ? "bg-purple-50/30 border-l-4 border-l-purple-500 hover:bg-purple-50/50"
                         : "hover:bg-slate-50/70 border-l-4 border-l-transparent"
                     }`}
                   >
                     <div className="flex justify-between items-start">
-                      <span className="font-bold text-slate-800 text-sm truncate max-w-[180px]">
+                      <span className="font-bold text-slate-800 text-sm truncate max-w-[180px] flex items-center gap-1.5">
+                        {isUnseen && (
+                          <span className="w-2 h-2 rounded-full bg-purple-600 shrink-0 inline-block" />
+                        )}
                         {msg.name}
                       </span>
                       <span className="text-[10px] text-slate-400 font-semibold whitespace-nowrap">

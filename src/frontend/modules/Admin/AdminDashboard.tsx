@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@backend/contexts/AuthContext";
+import { getUnseenCount } from "@frontend/utils/messageTracker";
 import {
   Images,
   GraduationCap,
   Briefcase,
+  Envelope,
   ArrowRight,
   Plus,
   TrendUp,
@@ -17,6 +19,7 @@ interface Stats {
   totalProjects: number;
   totalCourses: number;
   totalServices: number;
+  unseenMessages: number;
 }
 
 export default function AdminDashboard() {
@@ -25,6 +28,7 @@ export default function AdminDashboard() {
     totalProjects: 0,
     totalCourses: 0,
     totalServices: 0,
+    unseenMessages: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,11 +39,22 @@ export default function AdminDashboard() {
 
     const fetchStats = async () => {
       try {
-        const res = await api.getAdminStats();
+        const [statsRes, contactsRes] = await Promise.allSettled([
+          api.getAdminStats(),
+          api.adminGetContacts(),
+        ]);
+
+        const s = statsRes.status === "fulfilled" ? statsRes.value : {};
+        const c =
+          contactsRes.status === "fulfilled" ? contactsRes.value : { messages: [] };
+
+        const unseen = getUnseenCount(c?.messages || []);
+
         setStats({
-          totalProjects: res.totalProjects || 0,
-          totalCourses: res.totalCourses || 0,
-          totalServices: res.totalServices || 0,
+          totalProjects: s.totalProjects || 0,
+          totalCourses: s.totalCourses || 0,
+          totalServices: s.totalServices || 0,
+          unseenMessages: unseen,
         });
       } catch {
         // BFF may be down or unauthenticated — dashboard still renders with zeros
@@ -60,7 +75,6 @@ export default function AdminDashboard() {
       border: "border-teal-100",
       href: "/admin/projects",
     },
-
     {
       label: "Internships",
       value: isLoading ? "..." : stats.totalCourses,
@@ -79,11 +93,21 @@ export default function AdminDashboard() {
       border: "border-orange-100",
       href: "/admin/services",
     },
+    {
+      label: "Messages",
+      value: isLoading ? "..." : stats.unseenMessages,
+      icon: <Envelope size={26} weight="duotone" />,
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+      border: "border-purple-100",
+      href: "/admin/messages",
+    },
   ];
 
   const quickActions = [
     { label: "Add New Project", href: "/admin/projects/new", icon: <Plus size={16} /> },
     { label: "View All Projects", href: "/admin/projects", icon: <ArrowRight size={16} /> },
+    { label: "View Messages", href: "/admin/messages", icon: <Envelope size={16} /> },
   ];
 
   return (
