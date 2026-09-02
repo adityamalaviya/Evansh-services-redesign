@@ -46,12 +46,21 @@ export default function AdminMessagesPage() {
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
 
   // Reply Composer State
-  const [isReplying, setIsReplying] = useState(false);
-  const [replySubject, setReplySubject] = useState("");
-  const [replyMessage, setReplyMessage] = useState("");
-  const [isSendingReply, setIsSendingReply] = useState(false);
-  const [replySuccessMessage, setReplySuccessMessage] = useState<string | null>(null);
-  const [replyError, setReplyError] = useState<string | null>(null);
+  const [replyState, setReplyState] = useState<{
+    open: boolean;
+    subject: string;
+    message: string;
+    sending: boolean;
+    success: string | null;
+    error: string | null;
+  }>({
+    open: false,
+    subject: '',
+    message: '',
+    sending: false,
+    success: null,
+    error: null,
+  });
 
   useEffect(() => {
     setSeenIds(getSeenMessageIds());
@@ -82,7 +91,7 @@ export default function AdminMessagesPage() {
     const updated = messages.find((m) => m.$id === selectedMessage.$id);
     if (!updated) {
       setSelectedMessage(null);
-      setIsReplying(false);
+      setReplyState((s) => ({ ...s, open: false }));
     } else if (
       updated.name !== selectedMessage.name ||
       updated.email !== selectedMessage.email ||
@@ -96,48 +105,32 @@ export default function AdminMessagesPage() {
 
   const handleSelectMessage = (msg: MessageDocument) => {
     setSelectedMessage(msg);
-    setIsReplying(false);
-    setReplySubject(`Re: ${msg.subject}`);
-    setReplyMessage("");
-    setReplySuccessMessage(null);
-    setReplyError(null);
+    setReplyState({ open: false, subject: `Re: ${msg.subject}`, message: '', sending: false, success: null, error: null });
     markMessageAsSeen(msg.$id);
     setSeenIds((prev) => new Set([...prev, msg.$id]));
   };
 
-  const handleStartReply = () => {
-    if (!selectedMessage) return;
-    setIsReplying(true);
-    setReplySubject(`Re: ${selectedMessage.subject}`);
-    setReplySuccessMessage(null);
-    setReplyError(null);
-  };
+  const closeReply = () => setReplyState((s) => ({ ...s, open: false, error: null, success: null }));
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMessage) return;
-    if (!replyMessage.trim()) {
-      setReplyError("Please enter your reply message.");
+    if (!replyState.message.trim()) {
+      setReplyState((s) => ({ ...s, error: 'Please enter your reply message.' }));
       return;
     }
-
-    setIsSendingReply(true);
-    setReplyError(null);
-    setReplySuccessMessage(null);
+    setReplyState((s) => ({ ...s, sending: true, error: null, success: null }));
     try {
       const res = await api.adminReplyContact({
         to: selectedMessage.email,
-        subject: replySubject.trim() || `Re: ${selectedMessage.subject}`,
-        message: replyMessage.trim(),
+        subject: replyState.subject.trim() || `Re: ${selectedMessage.subject}`,
+        message: replyState.message.trim(),
         originalMessage: selectedMessage.message,
         recipientName: selectedMessage.name,
       });
-      setReplySuccessMessage(res.message || "Reply sent successfully!");
-      setReplyMessage("");
+      setReplyState((s) => ({ ...s, sending: false, success: res.message || 'Reply sent successfully!', message: '' }));
     } catch (err: any) {
-      setReplyError(formatApiError(err, "Failed to send reply. Please try again."));
-    } finally {
-      setIsSendingReply(false);
+      setReplyState((s) => ({ ...s, sending: false, error: formatApiError(err, 'Failed to send reply. Please try again.') }));
     }
   };
 
@@ -157,7 +150,7 @@ export default function AdminMessagesPage() {
       setMessages((prev) => prev.filter((m) => m.$id !== msg.$id));
       if (selectedMessage?.$id === msg.$id) {
         setSelectedMessage(null);
-        setIsReplying(false);
+        setReplyState((s) => ({ ...s, open: false }));
       }
     } catch {
       alert("Failed to delete message. Please try again.");
@@ -356,7 +349,7 @@ export default function AdminMessagesPage() {
                 <button
                   onClick={() => {
                     setSelectedMessage(null);
-                    setIsReplying(false);
+                    setReplyState((s) => ({ ...s, open: false }));
                   }}
                   className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-bold text-sm"
                 >
@@ -425,7 +418,7 @@ export default function AdminMessagesPage() {
                     <Trash size={18} />
                   </button>
                   <button
-                    onClick={handleStartReply}
+                    onClick={() => setReplyState((s) => ({ ...s, open: true }))}
                     className="flex items-center gap-2 bg-[#1E293B] hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95 shadow-sm shadow-slate-200 cursor-pointer"
                   >
                     <PaperPlaneRight size={16} weight="fill" />
@@ -443,7 +436,7 @@ export default function AdminMessagesPage() {
                 </div>
 
                 {/* Direct In-App Reply Box */}
-                {isReplying && (
+                {replyState.open && (
                   <div className="bg-white border border-teal-200 rounded-2xl p-6 shadow-md transition-all">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                       <div className="flex items-center gap-2.5">
@@ -461,11 +454,7 @@ export default function AdminMessagesPage() {
                         </div>
                       </div>
                       <button
-                        onClick={() => {
-                          setIsReplying(false);
-                          setReplyError(null);
-                          setReplySuccessMessage(null);
-                        }}
+                        onClick={closeReply}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                         title="Close reply box"
                       >
@@ -473,17 +462,17 @@ export default function AdminMessagesPage() {
                       </button>
                     </div>
 
-                    {replySuccessMessage && (
+                    {replyState.success && (
                       <div className="mb-4 p-3.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center gap-2">
                         <CheckCircle size={18} className="text-teal-600 flex-shrink-0" weight="bold" />
-                        <span>{replySuccessMessage}</span>
+                        <span>{replyState.success}</span>
                       </div>
                     )}
 
-                    {replyError && (
+                    {replyState.error && (
                       <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
                         <Warning size={18} className="text-red-600 flex-shrink-0" />
-                        <span>{replyError}</span>
+                        <span>{replyState.error}</span>
                       </div>
                     )}
 
@@ -492,10 +481,10 @@ export default function AdminMessagesPage() {
                         <label className="block text-xs font-bold text-slate-600 mb-1">Subject</label>
                         <input
                           type="text"
-                          value={replySubject}
-                          onChange={(e) => setReplySubject(e.target.value)}
+                          value={replyState.subject}
+                          onChange={(e) => setReplyState((s) => ({ ...s, subject: e.target.value }))}
                           required
-                          disabled={isSendingReply}
+                          disabled={replyState.sending}
                           className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 focus:border-[#14B8A6] transition-all disabled:bg-slate-50"
                           placeholder="Subject..."
                         />
@@ -507,11 +496,11 @@ export default function AdminMessagesPage() {
                         </label>
                         <textarea
                           rows={5}
-                          value={replyMessage}
-                          onChange={(e) => setReplyMessage(e.target.value)}
+                          value={replyState.message}
+                          onChange={(e) => setReplyState((s) => ({ ...s, message: e.target.value }))}
                           placeholder={`Type your response to ${selectedMessage.name}...`}
                           required
-                          disabled={isSendingReply}
+                          disabled={replyState.sending}
                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-normal text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20 focus:border-[#14B8A6] transition-all resize-y disabled:bg-slate-50"
                         />
                       </div>
@@ -523,21 +512,18 @@ export default function AdminMessagesPage() {
                         <div className="flex items-center gap-2 self-end sm:self-auto">
                           <button
                             type="button"
-                            onClick={() => {
-                              setIsReplying(false);
-                              setReplyError(null);
-                            }}
-                            disabled={isSendingReply}
+                            onClick={closeReply}
+                            disabled={replyState.sending}
                             className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
-                            disabled={isSendingReply || !replyMessage.trim()}
+                            disabled={replyState.sending || !replyState.message.trim()}
                             className="flex items-center gap-1.5 bg-[#14B8A6] hover:bg-[#0D9488] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                           >
-                            {isSendingReply ? (
+                            {replyState.sending ? (
                               <>
                                 <ArrowClockwise size={14} className="animate-spin" />
                                 Sending...

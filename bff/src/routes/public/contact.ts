@@ -5,6 +5,7 @@ import { contactLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
 import { logger } from '../../lib/logger';
 import { callPipeline } from '../../lib/fastapi';
+import { escapeHtml } from '../../lib/html';
 
 const router = Router();
 
@@ -102,13 +103,6 @@ async function sendContactEmail(data: {
     logger.warn('RESEND_API_KEY not configured — skipping email notification');
     return;
   }
-
-  const escapeHtml = (value: string) => value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 
   const safe = Object.fromEntries(
     Object.entries(data).map(([key, value]) => [key, escapeHtml(value)])

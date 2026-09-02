@@ -5,6 +5,7 @@ import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
 import { logger } from '../../lib/logger';
+import { escapeHtml } from '../../lib/html';
 
 const router = Router();
 
@@ -85,14 +86,6 @@ async function sendAdminReplyEmail(data: {
     logger.warn('RESEND_API_KEY not configured — skipping email dispatch');
     return;
   }
-
-  const escapeHtml = (value: string) =>
-    value
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
 
   const safeName = escapeHtml(data.recipientName || 'there');
   const safeMessage = escapeHtml(data.message);
