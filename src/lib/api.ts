@@ -150,6 +150,17 @@ export const api = {
     request<{ total: number; messages: any[] }>('/api/admin/contact'),
   adminDeleteContact: (id: string) =>
     request<void>(`/api/admin/contact/${id}`, { method: 'DELETE' }),
+  adminReplyContact: (data: {
+    to: string;
+    subject: string;
+    message: string;
+    originalMessage?: string;
+    recipientName?: string;
+  }) =>
+    request<{ success: boolean; message: string }>('/api/admin/contact/reply', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   adminUploadImage: (entity: 'courses' | 'portfolio' | 'services', file: File) => {
     const form = new FormData();

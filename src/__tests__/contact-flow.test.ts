@@ -81,6 +81,33 @@ describe('Contact Form & Admin Messages Flow', () => {
       })
     );
   });
+
+  it('sends a reply to a contact message via the in-app reply endpoint', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, message: 'Reply sent successfully.' }),
+    } as Response);
+
+    const payload = {
+      to: 'john@example.com',
+      subject: 'Re: Consulting Inquiry',
+      message: 'Thank you for reaching out. We will get back to you within 24 hours.',
+      originalMessage: 'Hello, I would like to inquire about cloud architecture consulting.',
+      recipientName: 'John Doe',
+    };
+
+    const res = await api.adminReplyContact(payload);
+    expect(res.success).toBe(true);
+    expect(res.message).toBe('Reply sent successfully.');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringContaining('/api/admin/contact/reply'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+    );
+  });
 });
 
 import {
