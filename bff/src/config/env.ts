@@ -26,6 +26,7 @@ const schema = z.object({
 
   // Email
   RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -70,5 +71,6 @@ export const config = {
 
   resend: {
     apiKey: parsed.data.RESEND_API_KEY,
+    fromEmail: parsed.data.RESEND_FROM_EMAIL || 'Evansh Services <onboarding@resend.dev>',
   },
 } as const;

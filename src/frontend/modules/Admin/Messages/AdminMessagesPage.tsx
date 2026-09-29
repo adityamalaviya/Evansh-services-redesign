@@ -470,9 +470,19 @@ export default function AdminMessagesPage() {
                     )}
 
                     {replyState.error && (
-                      <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
-                        <Warning size={18} className="text-red-600 flex-shrink-0" />
-                        <span>{replyState.error}</span>
+                      <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Warning size={18} className="text-red-600 flex-shrink-0" />
+                          <span>{replyState.error}</span>
+                        </div>
+                        <a
+                          href={`mailto:${selectedMessage.email}?subject=${encodeURIComponent(
+                            replyState.subject
+                          )}&body=${encodeURIComponent(replyState.message)}`}
+                          className="text-xs text-red-800 underline font-bold hover:text-red-950 flex-shrink-0"
+                        >
+                          Send via Email App Instead →
+                        </a>
                       </div>
                     )}
 
@@ -506,9 +516,20 @@ export default function AdminMessagesPage() {
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                        <p className="text-[11px] text-slate-400">
-                          Original message will be quoted in the email footer.
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[11px] text-slate-400">
+                            Original message will be quoted in email.
+                          </p>
+                          <span className="text-slate-300 hidden sm:inline">•</span>
+                          <a
+                            href={`mailto:${selectedMessage.email}?subject=${encodeURIComponent(
+                              replyState.subject
+                            )}&body=${encodeURIComponent(replyState.message)}`}
+                            className="text-[11px] text-slate-500 hover:text-teal-600 underline"
+                          >
+                            Open in Mail App
+                          </a>
+                        </div>
                         <div className="flex items-center gap-2 self-end sm:self-auto">
                           <button
                             type="button"
