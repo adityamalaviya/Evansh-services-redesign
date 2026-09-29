@@ -4,9 +4,8 @@ import { databases, DB_ID, COLLECTIONS, Query } from '../../lib/appwrite';
 import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
-import { logger } from '../../lib/logger';
 import { escapeHtml } from '../../lib/html';
-import { AppError } from '../../middleware/errorHandler';
+import { sendEmail } from '../../lib/email';
 
 const router = Router();
 
@@ -83,15 +82,6 @@ async function sendAdminReplyEmail(data: {
   originalMessage: string;
   recipientName: string;
 }) {
-  if (!config.resend.apiKey) {
-    logger.warn('RESEND_API_KEY not configured — skipping email dispatch');
-    throw new AppError(
-      503,
-      'EMAIL_NOT_CONFIGURED',
-      'RESEND_API_KEY is not configured on the server. Please add your Resend API key to the backend environment variables.'
-    );
-  }
-
   const safeName = escapeHtml(data.recipientName || 'there');
   const safeMessage = escapeHtml(data.message);
   const safeOriginal = escapeHtml(data.originalMessage);
@@ -125,43 +115,13 @@ async function sendAdminReplyEmail(data: {
     </div>
   `;
 
-  const payload: Record<string, any> = {
-    from: config.resend.fromEmail,
-    to: [data.to],
+  return sendEmail({
+    to: data.to,
     subject: data.subject,
     html: htmlContent,
-  };
-
-  if (config.admin.email) {
-    payload.reply_to = config.admin.email;
-  }
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.resend.apiKey}`,
-    },
-    body: JSON.stringify(payload),
+    text: `${data.message}\n\n---\nOriginal Message:\n${data.originalMessage}`,
+    replyTo: config.admin.email,
   });
-
-  if (!response.ok) {
-    let errorMessage = 'Failed to deliver email via Resend.';
-    try {
-      const errorJson = (await response.json()) as { message?: string; error?: string };
-      errorMessage = errorJson.message || errorJson.error || errorMessage;
-    } catch {
-      const errorText = await response.text().catch(() => '');
-      if (errorText) errorMessage = errorText;
-    }
-
-    logger.error({ status: response.status, errorMessage }, 'Failed to send admin reply email via Resend');
-    throw new AppError(response.status, 'EMAIL_DELIVERY_FAILED', errorMessage);
-  }
-
-  const result = await response.json().catch(() => ({}));
-  logger.info({ emailId: (result as any)?.id, to: data.to }, 'Admin reply email sent successfully via Resend');
-  return result;
 }
 
 export default router;

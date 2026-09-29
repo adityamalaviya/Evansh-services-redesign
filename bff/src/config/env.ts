@@ -24,7 +24,13 @@ const schema = z.object({
   // CORS
   ALLOWED_ORIGINS: z.string().default(process.env.NEXT_PUBLIC_ALLOWED_ORIGINS ?? 'http://localhost:3000'),
 
-  // Email
+  // Email — Native SMTP (Gmail / custom SMTP) or Resend
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_SECURE: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().optional(),
 });
@@ -67,6 +73,15 @@ export const config = {
 
   cors: {
     origins: parsed.data.ALLOWED_ORIGINS.split(',').map((o) => o.trim()),
+  },
+
+  email: {
+    smtpHost: parsed.data.SMTP_HOST || (parsed.data.SMTP_USER?.includes('@gmail.com') ? 'smtp.gmail.com' : undefined),
+    smtpPort: parsed.data.SMTP_PORT ? parseInt(parsed.data.SMTP_PORT, 10) : 465,
+    smtpSecure: parsed.data.SMTP_SECURE !== 'false',
+    smtpUser: parsed.data.SMTP_USER,
+    smtpPass: parsed.data.SMTP_PASS,
+    from: parsed.data.EMAIL_FROM || (parsed.data.SMTP_USER ? `"Evansh Services" <${parsed.data.SMTP_USER}>` : undefined),
   },
 
   resend: {

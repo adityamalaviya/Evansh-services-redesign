@@ -6,6 +6,7 @@ import { config } from '../../config/env';
 import { logger } from '../../lib/logger';
 import { callPipeline } from '../../lib/fastapi';
 import { escapeHtml } from '../../lib/html';
+import { sendEmail } from '../../lib/email';
 
 const router = Router();
 
@@ -99,38 +100,31 @@ async function sendContactEmail(data: {
   subject: string;
   message: string;
 }) {
-  if (!config.resend.apiKey) {
-    logger.warn('RESEND_API_KEY not configured — skipping email notification');
-    return;
-  }
-
   const safe = Object.fromEntries(
     Object.entries(data).map(([key, value]) => [key, escapeHtml(value)])
   ) as typeof data;
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.resend.apiKey}`,
-    },
-    body: JSON.stringify({
-      from: 'Evansh Services <onboarding@resend.dev>',
-      to: [config.admin.email],
-      subject: `New Contact: ${data.subject}`,
-      html: `
-        <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;border:1px solid #e2e8f0;border-radius:16px;">
-          <h2 style="color:#0f172a">New Contact Inquiry</h2>
-          <p><strong>Name:</strong> ${safe.name}</p>
-          <p><strong>Email:</strong> ${safe.email}</p>
-          <p><strong>Phone:</strong> ${safe.phone || 'Not provided'}</p>
-          <p><strong>Subject:</strong> ${safe.subject}</p>
-          <hr style="margin:16px 0;border:none;border-top:1px solid #e2e8f0;">
-          <p><strong>Message:</strong></p>
-          <p style="white-space:pre-wrap;background:#f8fafc;padding:16px;border-radius:8px;">${safe.message}</p>
-        </div>
-      `,
-    }),
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;border:1px solid #e2e8f0;border-radius:16px;">
+      <h2 style="color:#0f172a">New Contact Inquiry</h2>
+      <p><strong>Name:</strong> ${safe.name}</p>
+      <p><strong>Email:</strong> ${safe.email}</p>
+      <p><strong>Phone:</strong> ${safe.phone || 'Not provided'}</p>
+      <p><strong>Subject:</strong> ${safe.subject}</p>
+      <hr style="margin:16px 0;border:none;border-top:1px solid #e2e8f0;">
+      <p><strong>Message:</strong></p>
+      <p style="white-space:pre-wrap;background:#f8fafc;padding:16px;border-radius:8px;">${safe.message}</p>
+    </div>
+  `;
+
+  if (!config.admin.email) return;
+
+  await sendEmail({
+    to: config.admin.email,
+    replyTo: data.email,
+    subject: `New Contact: ${data.subject}`,
+    html,
+    text: `New Contact Inquiry from ${data.name} (${data.email}, ${data.phone || 'no phone'})\n\nSubject: ${data.subject}\n\n${data.message}`,
   });
 }
 
