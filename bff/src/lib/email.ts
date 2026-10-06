@@ -3,6 +3,7 @@ import type { Transporter } from 'nodemailer';
 import { config } from '../config/env';
 import { logger } from './logger';
 import { AppError } from '../middleware/errorHandler';
+import { stripHtmlToText } from './html';
 
 let transporter: Transporter | null = null;
 
@@ -61,7 +62,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ messageId:
         to: Array.isArray(to) ? to.join(', ') : to,
         subject,
         html,
-        text: text || html.replace(/<[^>]*>?/gm, ''),
+        text: text || stripHtmlToText(html),
         replyTo: replyTo || config.admin.email || config.email.smtpUser,
       });
 
