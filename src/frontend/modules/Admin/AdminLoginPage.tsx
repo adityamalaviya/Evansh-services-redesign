@@ -4,8 +4,6 @@ import React, { startTransition, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EnvelopeSimple, LockKey, Eye, EyeSlash, Hexagon, ShieldWarning } from "@phosphor-icons/react";
 import { useAuth } from "@backend/contexts/AuthContext";
-import { isAdmin } from "@backend/guards/adminGuard";
-import { publicEnv } from "@/lib/env";
 import { z } from "zod";
 
 const adminLoginSchema = z.object({
@@ -16,7 +14,7 @@ const adminLoginSchema = z.object({
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isLoggedIn, isLoading, user } = useAuth();
+  const { login, logout, isLoggedIn, isAdmin, isLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,14 +24,14 @@ export default function AdminLoginPage() {
 
   // If already logged in as admin, redirect
   useEffect(() => {
-    if (!isLoading && isLoggedIn && isAdmin(user?.email)) {
+    if (!isLoading && isLoggedIn && isAdmin) {
       router.push("/admin");
     }
-  }, [isLoading, isLoggedIn, user, router]);
+  }, [isLoading, isLoggedIn, isAdmin, router]);
 
   useEffect(() => {
     if (searchParams.get("error") === "access_denied") {
-      startTransition(() => setError("Access denied. This account does not have admin privileges."));
+      startTransition(() => setError("Access denied. You do not have permission to access the admin panel."));
     }
   }, [searchParams]);
 
@@ -48,13 +46,11 @@ export default function AdminLoginPage() {
     setIsSubmitting(true);
 
     try {
-      await login(email.trim(), password);
+      const isUserAdmin = await login(email.trim(), password);
       
-      // Get admin email from env
-      const adminEmail = publicEnv.adminEmail.trim().toLowerCase();
-      
-      if (email.trim().toLowerCase() !== adminEmail) {
-        setError(`Access denied. ${email} is not an admin account.`);
+      if (!isUserAdmin) {
+        await logout();
+        setError("Access denied. You do not have permission to access the admin panel.");
         setIsSubmitting(false);
         return;
       }
@@ -113,7 +109,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@evansh.com"
+                  placeholder="admin@example.com"
                   required
                   className="w-full bg-slate-800 border border-slate-700 text-white placeholder:text-slate-500 rounded-xl pl-12 pr-4 py-3.5 text-sm font-medium focus:outline-none focus:border-[#14B8A6]/60 focus:ring-2 focus:ring-[#14B8A6]/20 transition-all"
                 />

@@ -1,8 +1,16 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { databases, DB_ID, COLLECTIONS, Query } from '../../lib/appwrite';
-import { requireAdmin } from '../../middleware/auth';
+import { requireAdmin, requireAuth } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
+import { config } from '../../config/env';
 const router = Router();
+
+// GET /api/admin/check — returns boolean whether authenticated user is an admin
+router.get('/check', adminLimiter, requireAuth, (req: Request, res: Response) => {
+  const userEmail = req.user?.email ? req.user.email.toLowerCase().trim() : '';
+  const isAdmin = Boolean(userEmail && config.admin.email && userEmail === config.admin.email);
+  res.json({ isAdmin });
+});
 
 // GET /api/admin/stats — aggregated stats for dashboard
 router.get('/stats', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {

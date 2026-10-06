@@ -11,6 +11,11 @@ interface ApiError {
 let cachedJwt: string | null = null;
 let cacheExpiry = 0;
 
+export function clearAuthCache(): void {
+  cachedJwt = null;
+  cacheExpiry = 0;
+}
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
   try {
     const now = Date.now();
@@ -111,6 +116,16 @@ export const api = {
   }) => request<{ success: boolean; message: string }>('/api/enrollments', {
     method: 'POST', body: JSON.stringify(data),
   }),
+
+  // Admin — Auth Status
+  checkAdminStatus: async (): Promise<boolean> => {
+    try {
+      const res = await request<{ isAdmin: boolean }>('/api/admin/check');
+      return Boolean(res?.isAdmin);
+    } catch {
+      return false;
+    }
+  },
 
   // Admin — Dashboard
   getAdminStats: () => request<any>('/api/admin/stats'),
