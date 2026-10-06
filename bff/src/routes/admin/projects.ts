@@ -5,7 +5,8 @@ import { databases, storage, DB_ID, COLLECTIONS, BUCKET_ID, ID, Query } from '..
 import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
 import { logger } from '../../lib/logger';
-import { config } from '../../config/env';
+import { uploadImageWithFallback, deleteImageWithFallback } from '../../lib/mediaUpload';
+
 const router = Router();
 
 // Multer: store file in memory for upload to Appwrite
@@ -24,40 +25,6 @@ const projectSchema = z.object({
   category: z.string().max(100).optional().default(''),
 });
 
-interface UploadedImage {
-  file_id: string;
-  image_url: string;
-}
-
-async function uploadProjectImage(req: Request): Promise<UploadedImage> {
-  const body = new FormData();
-  body.append('file', new Blob([new Uint8Array(req.file!.buffer)], { type: req.file!.mimetype }), req.file!.originalname);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
-
-  try {
-    const response = await fetch(`${config.pipeline.url}/media/portfolio/upload-image`, {
-      method: 'POST',
-      headers: {
-        'X-Service-Token': config.pipeline.serviceToken,
-        'X-Admin-Verified': 'true',
-        ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}),
-        ...(req.headers.cookie ? { Cookie: req.headers.cookie } : {}),
-      },
-      body,
-      signal: controller.signal,
-    });
-
-    const result = await response.json() as UploadedImage | { detail?: string };
-    if (!response.ok || !('image_url' in result) || !('file_id' in result)) {
-      throw new Error(`Pipeline image upload failed (${response.status}): ${JSON.stringify(result)}`);
-    }
-    return result;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 // GET /api/admin/projects
 router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -65,8 +32,6 @@ router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, 
       Query.orderDesc('$createdAt'),
       Query.limit(100),
     ];
-
-
 
     const result = await databases.listDocuments(DB_ID, COLLECTIONS.projects, queries);
     res.json({
@@ -104,7 +69,7 @@ router.post('/', adminLimiter, requireAdmin, upload.single('image'), async (req:
     let imageId: string | null = null;
     let imageUrl: string | null = null;
     if (req.file) {
-      const uploaded = await uploadProjectImage(req);
+      const uploaded = await uploadImageWithFallback(req, 'portfolio');
       imageId = uploaded.file_id;
       imageUrl = uploaded.image_url;
     }
@@ -147,21 +112,12 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
     let imageUrl = (existing.image_url as string | undefined) || '';
 
     if (req.file) {
-      // Upload new image
-      const uploaded = await uploadProjectImage(req);
-      // Delete old image via Pipeline (non-blocking)
+      // Upload new image with fallback
+      const uploaded = await uploadImageWithFallback(req, 'portfolio');
+      // Delete old image with fallback
       if (imageId) {
-        const formData = new FormData();
-        formData.append('file_id', imageId);
-        fetch(`${config.pipeline.url}/media/portfolio/delete-image`, {
-          method: 'DELETE',
-          headers: {
-            'X-Service-Token': config.pipeline.serviceToken,
-            'X-Admin-Verified': 'true',
-          },
-          body: formData,
-        }).catch((err) =>
-          logger.warn({ err, imageId }, 'Failed to delete old image via Pipeline')
+        deleteImageWithFallback(imageId, 'portfolio').catch((err) =>
+          logger.warn({ err, imageId }, 'Failed to delete old image')
         );
       }
       imageId = uploaded.file_id;
@@ -184,26 +140,15 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
   } catch (err) { next(err); }
 });
 
-// DELETE /api/admin/projects/:id — deletes document + storage file via Pipeline
+// DELETE /api/admin/projects/:id — deletes document + storage file
 router.delete('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id);
     await databases.deleteDocument(DB_ID, COLLECTIONS.projects, req.params.id);
 
-    // Delete associated image via Pipeline
+    // Delete associated image with fallback
     if (doc.thumbnailFileId) {
-      const formData = new FormData();
-      formData.append('file_id', doc.thumbnailFileId);
-      await fetch(`${config.pipeline.url}/media/portfolio/delete-image`, {
-        method: 'DELETE',
-        headers: {
-          'X-Service-Token': config.pipeline.serviceToken,
-          'X-Admin-Verified': 'true',
-        },
-        body: formData,
-      }).catch((err) =>
-        logger.warn({ err, imageId: doc.thumbnailFileId }, 'Failed to delete storage file via Pipeline')
-      );
+      await deleteImageWithFallback(doc.thumbnailFileId, 'portfolio');
     }
 
     res.status(204).send();

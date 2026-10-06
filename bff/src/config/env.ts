@@ -1,4 +1,11 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import { z } from 'zod';
+
+// Load environment variables from bff/.env, falling back to root .env.local and .env
+dotenv.config({ path: path.resolve(process.cwd(), '.env'), quiet: true });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env.local'), quiet: true });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env'), quiet: true });
 
 const schema = z.object({
   PORT: z.string().default('3001'),

@@ -4,7 +4,7 @@ import { databases, DB_ID, COLLECTIONS, ID } from '../../lib/appwrite';
 import { contactLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
 import { logger } from '../../lib/logger';
-import { callPipeline } from '../../lib/fastapi';
+import { validateWithPipeline } from '../../lib/pipelineValidation';
 import { escapeHtml } from '../../lib/html';
 import { sendEmail } from '../../lib/email';
 
@@ -40,28 +40,11 @@ router.post('/', contactLimiter, async (req: Request, res: Response, next: NextF
 
     const { name, email, phone, subject, message } = parsed.data;
 
-    let pipelineResult: { valid: boolean; errors?: Record<string, string[]> };
-    try {
-      pipelineResult = await callPipeline<{ valid: boolean; errors?: Record<string, string[]> }>('/pipeline/validate/contact', {
-        body: {
-          name,
-          email,
-          phone,
-          subject,
-          message,
-        },
-        requestId: req.requestId,
-      });
-    } catch (err) {
-      logger.error({ requestId: req.requestId, err }, 'Contact pipeline validation failed');
-      res.status(502).json({
-        error: {
-          code: 'PIPELINE_UNAVAILABLE',
-          message: 'Contact validation service is unavailable. Please try again later.',
-        },
-      });
-      return;
-    }
+    const pipelineResult = await validateWithPipeline(
+      '/pipeline/validate/contact',
+      { name, email, phone, subject, message },
+      req.requestId
+    );
     if (!pipelineResult.valid) {
       res.status(400).json({
         error: {

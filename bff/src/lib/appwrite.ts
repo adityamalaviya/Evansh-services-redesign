@@ -6,7 +6,11 @@ import {
   ID,
   Query,
   Models,
+  Permission,
+  Role,
+  AppwriteException,
 } from 'node-appwrite';
+import { InputFile } from 'node-appwrite/file';
 import { config } from '../config/env';
 
 // ── Appwrite client (server-side only — API key never exposed to browser) ──
@@ -17,7 +21,7 @@ const client = new Client()
 
 export const databases = new Databases(client);
 export const storage = new Storage(client);
-export { ID, Query };
+export { ID, Query, Permission, Role, AppwriteException, InputFile };
 
 // ── Collection IDs ──────────────────────────────────────────────────────────
 export const DB_ID = config.appwrite.dbId;

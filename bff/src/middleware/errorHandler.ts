@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../lib/logger';
+import { AppwriteException } from '../lib/appwrite';
 
 export class AppError extends Error {
   constructor(
@@ -22,7 +23,6 @@ export function errorHandler(
   err: Error,
   req: Request,
   res: Response,
-   
   _next: NextFunction
 ): void {
   const requestId = req.requestId;
@@ -35,17 +35,43 @@ export function errorHandler(
     return;
   }
 
-  // Appwrite SDK errors have a `type` and `code` field
-  const appwriteErr = err as any;
-  if (appwriteErr?.type && appwriteErr?.code) {
-    logger.warn({ requestId, type: appwriteErr.type, code: appwriteErr.code }, 'Appwrite error');
+  // Appwrite SDK errors
+  if (err instanceof AppwriteException || ('type' in err && 'code' in err && typeof (err as any).code === 'number')) {
+    const appwriteErr = err as AppwriteException;
+    logger.warn({ requestId, type: appwriteErr.type, code: appwriteErr.code, message: appwriteErr.message }, 'Appwrite error');
 
-    // Map common Appwrite errors to friendly messages
-    const status = appwriteErr.code >= 400 && appwriteErr.code < 600 ? appwriteErr.code : 500;
+    const status = appwriteErr.code >= 400 && appwriteErr.code < 600 ? appwriteErr.code : 502;
     res.status(status).json({
       error: {
-        code: appwriteErr.type?.toUpperCase() ?? 'APPWRITE_ERROR',
-        message: appwriteErr.message ?? 'A database error occurred.',
+        code: appwriteErr.type ? appwriteErr.type.toUpperCase() : 'DATABASE_ERROR',
+        message: appwriteErr.message || 'A database error occurred.',
+      },
+    });
+    return;
+  }
+
+  // Network / Gateway errors to upstream services (FastAPI Pipeline, Appwrite Cloud, SMTP, Resend)
+  const errCode = (err as any)?.code || (err as any)?.cause?.code;
+  const isNetworkTimeout = err.name === 'AbortError' || errCode === 'ETIMEDOUT' || errCode === 'UND_ERR_CONNECT_TIMEOUT';
+  const isNetworkRefused = errCode === 'ECONNREFUSED' || errCode === 'ENOTFOUND' || errCode === 'EAI_AGAIN';
+
+  if (isNetworkTimeout) {
+    logger.warn({ requestId, err: err.message, code: errCode }, 'Upstream service timed out');
+    res.status(504).json({
+      error: {
+        code: 'GATEWAY_TIMEOUT',
+        message: 'The requested service timed out. Please try again.',
+      },
+    });
+    return;
+  }
+
+  if (isNetworkRefused) {
+    logger.warn({ requestId, err: err.message, code: errCode }, 'Upstream service unavailable or connection refused');
+    res.status(502).json({
+      error: {
+        code: 'BAD_GATEWAY',
+        message: 'Upstream service is temporarily unavailable. Please try again shortly.',
       },
     });
     return;
@@ -57,3 +83,4 @@ export function errorHandler(
     error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred. Please try again.' },
   });
 }
+

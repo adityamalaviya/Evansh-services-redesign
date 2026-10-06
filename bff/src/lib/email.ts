@@ -71,7 +71,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ messageId:
     } catch (err: any) {
       logger.error({ err, to }, 'SMTP email sending failed');
       const msg = err?.message || 'SMTP delivery failed. Check your email credentials.';
-      throw new AppError(500, 'SMTP_DELIVERY_FAILED', msg);
+      throw new AppError(502, 'SMTP_DELIVERY_FAILED', msg);
     }
   }
 
@@ -107,7 +107,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ messageId:
       return { messageId: data.id };
     } catch (err: any) {
       logger.error({ err, to }, 'Resend email fallback failed');
-      throw new AppError(500, 'RESEND_DELIVERY_FAILED', err.message);
+      throw new AppError(502, 'RESEND_DELIVERY_FAILED', err.message);
     }
   }
 
