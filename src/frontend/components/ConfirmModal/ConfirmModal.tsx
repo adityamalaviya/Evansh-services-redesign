@@ -3,7 +3,7 @@
 import React, { startTransition, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Warning, SignOut, X } from "@phosphor-icons/react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 interface ConfirmModalProps {
   isOpen: boolean;
