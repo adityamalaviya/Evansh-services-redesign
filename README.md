@@ -22,15 +22,14 @@ Address: SDB-82, Ward 2A, 1st Floor, Above Yuva Collection, Adipur, Gandhidham, 
 
 | Layer     | Technology                                        |
 | --------- | ------------------------------------------------- |
-| Frontend  | Next.js 14 + TypeScript + Tailwind CSS (Vercel)   |
-| BFF       | Node.js/Express — port 3001 (Render)              |
-| Pipeline  | FastAPI Python 3.12 — port 8000 (Render)          |
+| Frontend  | Next.js 16 + TypeScript + Tailwind CSS (Vercel)   |
+| BFF       | Node.js/Express — port 3001 (Render / Docker)     |
 | Database  | Appwrite Cloud                                    |
-| Auth      | JWT + OAuth (Google, GitHub, Facebook)            |
-| Email     | Resend                                            |
+| Auth      | Appwrite Auth / Session                           |
+| Email     | Native SMTP / Resend                              |
 | CI/CD     | GitHub Actions → GHCR → Docker                   |
 
-> **Architecture rule:** Next.js never calls Appwrite directly — all data flows through BFF → Pipeline → Appwrite.
+> **Architecture rule:** Next.js never exposes server-side credentials — data flows securely through BFF → Appwrite.
 
 ---
 
@@ -46,10 +45,10 @@ git clone https://github.com/adityamalaviya/Evansh-services-redesign.git
 cd Evansh-services-redesign
 
 cp .env.example .env
-cp pipeline/.env.example pipeline/.env
+cp bff/.env.example bff/.env
 # fill in values from team lead
 
-docker compose -f docker-compose.ghcr.yml up -d   # starts BFF + Pipeline
+docker compose -f docker-compose.ghcr.yml up -d   # starts BFF
 pnpm install && pnpm dev                           # starts Next.js at localhost:3000
 ```
 
@@ -57,20 +56,18 @@ pnpm install && pnpm dev                           # starts Next.js at localhost
 | -------- | ---------------------------- |
 | Frontend | http://localhost:3000        |
 | BFF      | http://localhost:3001        |
-| Pipeline | http://localhost:8000        |
 
 ---
 
 ## Environment Variables
 
-See `.env.example` and `pipeline/.env.example` for the full list. Key variables:
+See `.env.example` and `bff/.env.example` for the full list. Key variables:
 
 | Variable | Description |
 |---|---|
 | `NEXT_PUBLIC_APPWRITE_*` | Appwrite project config (browser-safe) |
 | `NEXT_PUBLIC_BFF_URL` | BFF URL for frontend |
 | `APPWRITE_API_KEY` | Server-only Appwrite key — **rotate before production** |
-| `PIPELINE_SERVICE_TOKEN` | Shared secret between BFF and Pipeline |
 | `RESEND_API_KEY` | Transactional email |
 | `REVALIDATE_SECRET` | Next.js ISR secret |
 
