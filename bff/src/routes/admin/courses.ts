@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { databases, DB_ID, COLLECTIONS, ID, Query } from '../../lib/appwrite';
 import { requireAdmin } from '../../middleware/auth';
 import { adminLimiter } from '../../middleware/rateLimiter';
-import { validateWithPipeline } from '../../lib/pipelineValidation';
 const router = Router();
 
 const courseSchema = z.object({
@@ -54,19 +53,6 @@ router.post('/', adminLimiter, requireAdmin, async (req: Request, res: Response,
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid data.', fields: parsed.error.flatten().fieldErrors } });
       return;
     }
-    const pipelineResult = await validateWithPipeline('/pipeline/validate/course', {
-      title: parsed.data.title,
-      subtitle: parsed.data.subtitle,
-      short_description: parsed.data.shortDescription,
-      about_course: parsed.data.aboutCourse,
-      price: parsed.data.price,
-      slug: parsed.data.slug,
-      what_you_will_learn: parsed.data.whatYouWillLearn,
-    }, req.requestId);
-    if (!pipelineResult.valid) {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid data.', fields: pipelineResult.errors } });
-      return;
-    }
     const doc = await databases.createDocument(DB_ID, COLLECTIONS.courses, ID.unique(), parsed.data);
     res.status(201).json(doc);
   } catch (err) { next(err); }
@@ -78,19 +64,6 @@ router.put('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string 
     const parsed = courseSchema.partial().safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid data.', fields: parsed.error.flatten().fieldErrors } });
-      return;
-    }
-    const pipelineResult = await validateWithPipeline('/pipeline/validate/course', {
-      title: parsed.data.title ?? '',
-      subtitle: parsed.data.subtitle ?? '',
-      short_description: parsed.data.shortDescription ?? '',
-      about_course: parsed.data.aboutCourse ?? '',
-      price: parsed.data.price ?? 0,
-      slug: parsed.data.slug ?? 'temp-slug',
-      what_you_will_learn: parsed.data.whatYouWillLearn ?? '',
-    }, req.requestId);
-    if (!pipelineResult.valid) {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid data.', fields: pipelineResult.errors } });
       return;
     }
     const doc = await databases.updateDocument(DB_ID, COLLECTIONS.courses, req.params.id, parsed.data);

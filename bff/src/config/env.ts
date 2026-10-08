@@ -23,11 +23,6 @@ const schema = z.object({
   // Admin
   ADMIN_EMAIL: z.string().email().default(process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? ''),
 
-  // Internal FastAPI pipeline
-  PIPELINE_SERVICE_TOKEN: z.string().min(32),
-  SERVICE_JWT_SECRET: z.string().optional().default(process.env.SERVICE_JWT_SECRET ?? ''),
-  PIPELINE_URL: z.string().url().default(process.env.PIPELINE_URL ?? 'http://localhost:8000'),
-
   // CORS
   ALLOWED_ORIGINS: z.string().default(process.env.NEXT_PUBLIC_ALLOWED_ORIGINS ?? 'http://localhost:3000'),
 
@@ -59,7 +54,6 @@ export const config = {
   port: parseInt(parsed.data.PORT, 10),
   isDev: parsed.data.NODE_ENV === 'development',
   nodeEnv: parsed.data.NODE_ENV,
-  serviceJwtSecret: parsed.data.SERVICE_JWT_SECRET || process.env.SERVICE_JWT_SECRET,
 
   appwrite: {
     endpoint: parsed.data.APPWRITE_ENDPOINT,
@@ -71,11 +65,6 @@ export const config = {
 
   admin: {
     email: parsed.data.ADMIN_EMAIL.toLowerCase().trim(),
-  },
-
-  pipeline: {
-    serviceToken: parsed.data.PIPELINE_SERVICE_TOKEN,
-    url: parsed.data.PIPELINE_URL,
   },
 
   cors: {
