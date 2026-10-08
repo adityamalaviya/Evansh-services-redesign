@@ -4,7 +4,6 @@ import { databases, DB_ID, COLLECTIONS, ID, Query } from '../../lib/appwrite';
 import { publicLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
 import { logger } from '../../lib/logger';
-import { validateWithPipeline } from '../../lib/pipelineValidation';
 
 const router = Router();
 const enrollmentSchema = z.object({
@@ -27,16 +26,6 @@ router.post('/', publicLimiter, async (req: Request, res: Response, next: NextFu
       return;
     }
     const data = parsed.data;
-
-    const pipelineResult = await validateWithPipeline(
-      '/pipeline/validate/enrollment',
-      data as unknown as Record<string, unknown>,
-      req.requestId
-    );
-    if (!pipelineResult.valid) {
-      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Please check the enrollment fields.', fields: pipelineResult.errors } });
-      return;
-    }
 
     const duplicate = await databases.listDocuments(DB_ID, COLLECTIONS.enrollments, [
       Query.equal('id', data.id), Query.equal('email', data.email.toLowerCase()), Query.limit(1),
