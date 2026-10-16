@@ -3,6 +3,7 @@ export const publicEnv = {
   appwriteEndpoint: process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1',
   appwriteProjectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '',
   bffUrl: process.env.NEXT_PUBLIC_BFF_URL || 'http://localhost:3001',
+  adminEmail: process.env.NEXT_PUBLIC_ADMIN_EMAIL || '',
   dbId: process.env.NEXT_PUBLIC_DB_ID || '',
 } as const;
 
