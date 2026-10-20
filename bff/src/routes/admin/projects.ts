@@ -34,13 +34,16 @@ router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, 
     ];
 
     const result = await databases.listDocuments(DB_ID, COLLECTIONS.projects, queries);
+    const projects = result.documents;
+    for (let i = 0; i < projects.length; i++) {
+      const doc = projects[i] as typeof projects[number] & { imageId?: string; imageUrl?: string | null };
+      doc.imageId = doc.thumbnailFileId;
+      doc.imageUrl = doc.image_url || null;
+    }
+
     res.json({
       total: result.total,
-      projects: result.documents.map((doc) => ({
-        ...doc,
-        imageId: doc.thumbnailFileId,
-        imageUrl: doc.image_url || null,
-      })),
+      projects,
     });
   } catch (err) { next(err); }
 });
@@ -48,12 +51,10 @@ router.get('/', adminLimiter, requireAdmin, async (req: Request, res: Response, 
 // GET /api/admin/projects/:id
 router.get('/:id', adminLimiter, requireAdmin, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
-    const doc = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id);
-    res.json({
-      ...doc,
-      imageId: doc.thumbnailFileId,
-      imageUrl: doc.image_url || null,
-    });
+    const doc = await databases.getDocument(DB_ID, COLLECTIONS.projects, req.params.id) as any;
+    doc.imageId = doc.thumbnailFileId;
+    doc.imageUrl = doc.image_url || null;
+    res.json(doc);
   } catch (err) { next(err); }
 });
 
@@ -74,7 +75,7 @@ router.post('/', adminLimiter, requireAdmin, upload.single('image'), async (req:
       imageUrl = uploaded.image_url;
     }
 
-    let doc;
+    let doc: any;
     try {
       doc = await databases.createDocument(DB_ID, COLLECTIONS.projects, ID.unique(), {
         title: parsed.data.title,
@@ -90,11 +91,9 @@ router.post('/', adminLimiter, requireAdmin, upload.single('image'), async (req:
       throw error;
     }
 
-    res.status(201).json({
-      ...doc,
-      imageId: doc.thumbnailFileId,
-      imageUrl: doc.image_url,
-    });
+    doc.imageId = doc.thumbnailFileId;
+    doc.imageUrl = doc.image_url;
+    res.status(201).json(doc);
   } catch (err) { next(err); }
 });
 
@@ -124,7 +123,7 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
       imageUrl = uploaded.image_url;
     }
 
-    const doc = await databases.updateDocument(DB_ID, COLLECTIONS.projects, req.params.id, {
+    const doc: any = await databases.updateDocument(DB_ID, COLLECTIONS.projects, req.params.id, {
       title: parsed.data.title,
       description: parsed.data.description,
       category: parsed.data.category,
@@ -132,11 +131,9 @@ router.put('/:id', adminLimiter, requireAdmin, upload.single('image'), async (re
       image_url: imageId ? (imageUrl ?? '') : '',
     });
 
-    res.json({
-      ...doc,
-      imageId: doc.thumbnailFileId,
-      imageUrl: doc.image_url,
-    });
+    doc.imageId = doc.thumbnailFileId;
+    doc.imageUrl = doc.image_url;
+    res.json(doc);
   } catch (err) { next(err); }
 });
 
