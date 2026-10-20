@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { account, ID } from "@/lib/appwrite/client";
 import { Models, OAuthProvider } from "appwrite";
 import { api, clearAuthCache } from "@/lib/api";
+import { isAdmin as checkAdminGuard } from "@backend/guards/adminGuard";
 
 interface AuthContextType {
   isLoggedIn: boolean;
@@ -26,13 +27,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const resolveAdminStatus = async (userEmail?: string | null): Promise<boolean> => {
+    try {
+      const serverVerified = await api.checkAdminStatus();
+      if (serverVerified) return true;
+    } catch {
+      // BFF unreachable or offline
+    }
+    return checkAdminGuard(false, userEmail);
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
         const currentUser = await account.get();
         setUser(currentUser);
         setIsLoggedIn(true);
-        const adminStatus = await api.checkAdminStatus();
+        const adminStatus = await resolveAdminStatus(currentUser.email);
         setIsAdmin(adminStatus);
       } catch {
         setUser(null);
@@ -56,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const currentUser = await account.get();
     setUser(currentUser);
     setIsLoggedIn(true);
-    const adminStatus = await api.checkAdminStatus();
+    const adminStatus = await resolveAdminStatus(currentUser.email);
     setIsAdmin(adminStatus);
     return adminStatus;
   };
@@ -78,7 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const currentUser = await account.get();
     setUser(currentUser);
     setIsLoggedIn(true);
-    setIsAdmin(false);
+    const adminStatus = await resolveAdminStatus(currentUser.email);
+    setIsAdmin(adminStatus);
   };
 
   const loginWithGoogle = () => {
@@ -95,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const checkIsAdmin = async (): Promise<boolean> => {
-    const status = await api.checkAdminStatus();
+    const status = await resolveAdminStatus(user?.email);
     setIsAdmin(status);
     return status;
   };

@@ -4,6 +4,7 @@ import React, { startTransition, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { EnvelopeSimple, LockKey, Eye, EyeSlash, Hexagon, ShieldWarning } from "@phosphor-icons/react";
 import { useAuth } from "@backend/contexts/AuthContext";
+import { isAdmin as checkAdminGuard } from "@backend/guards/adminGuard";
 import { z } from "zod";
 
 const adminLoginSchema = z.object({
@@ -14,7 +15,7 @@ const adminLoginSchema = z.object({
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, logout, isLoggedIn, isAdmin, isLoading } = useAuth();
+  const { login, logout, isLoggedIn, isAdmin, isLoading, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,12 +23,14 @@ export default function AdminLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const hasAdminAccess = isAdmin || checkAdminGuard(false, user?.email);
+
   // If already logged in as admin, redirect
   useEffect(() => {
-    if (!isLoading && isLoggedIn && isAdmin) {
+    if (!isLoading && isLoggedIn && hasAdminAccess) {
       router.push("/admin");
     }
-  }, [isLoading, isLoggedIn, isAdmin, router]);
+  }, [isLoading, isLoggedIn, hasAdminAccess, router]);
 
   useEffect(() => {
     if (searchParams.get("error") === "access_denied") {
