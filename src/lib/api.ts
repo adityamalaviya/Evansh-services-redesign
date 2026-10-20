@@ -9,20 +9,48 @@ interface ApiError {
 
 // ── Cache JWT to avoid generating it multiple times in quick succession ─────
 let cachedJwt: string | null = null;
-let cacheExpiry = 0;
+let cacheExpiryTimer: ReturnType<typeof setTimeout> | null = null;
+
+const CACHE_DURATION_MS = 4 * 60 * 1000; // JWT is valid for 15 mins, cache it for 4 mins
+
+export function clearJwtCache(): void {
+  if (cacheExpiryTimer) {
+    clearTimeout(cacheExpiryTimer);
+    cacheExpiryTimer = null;
+  }
+  cachedJwt = null;
+}
+
+function setCachedJwt(jwt: string | null): void {
+  clearJwtCache();
+  cachedJwt = jwt;
+  if (jwt) {
+    cacheExpiryTimer = setTimeout(() => {
+      cachedJwt = null;
+      cacheExpiryTimer = null;
+    }, CACHE_DURATION_MS);
+
+    if (
+      cacheExpiryTimer &&
+      typeof cacheExpiryTimer === 'object' &&
+      'unref' in cacheExpiryTimer &&
+      typeof (cacheExpiryTimer as any).unref === 'function'
+    ) {
+      (cacheExpiryTimer as any).unref();
+    }
+  }
+}
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   try {
-    const now = Date.now();
-    if (cachedJwt && now < cacheExpiry) {
+    if (cachedJwt) {
       return { Authorization: `Bearer ${cachedJwt}` };
     }
 
     const session = await account.get().catch(() => null);
     if (session) {
       const { jwt } = await account.createJWT();
-      cachedJwt = jwt;
-      cacheExpiry = now + 4 * 60 * 1000; // JWT is valid for 15 mins, cache it for 4 mins
+      setCachedJwt(jwt);
       return { Authorization: `Bearer ${jwt}` };
     }
   } catch (err) {
