@@ -20,8 +20,13 @@ const schema = z.object({
   APPWRITE_DB_ID: z.string().min(1).default(process.env.NEXT_PUBLIC_APPWRITE_DB_ID ?? ''),
   APPWRITE_BUCKET_ID: z.string().min(1).default(process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ?? ''),
 
-  // Admin (server-only)
-  ADMIN_EMAIL: z.string().email(),
+  // Admin (server-only or inherited from NEXT_PUBLIC_ADMIN_EMAIL)
+  ADMIN_EMAIL: z
+    .string()
+    .email()
+    .or(z.literal(''))
+    .default(process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || ''),
+
 
   // Internal FastAPI pipeline
   PIPELINE_SERVICE_TOKEN: z.string().min(32),
