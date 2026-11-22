@@ -35,19 +35,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
-      # ── Pipeline (FastAPI) ──────────────────────────────────────────────
-      - name: Build & push pipeline
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
-        with:
-          context: ./pipeline
-          push: true
-          tags: |
-            ghcr.io/${{ env.IMAGE_OWNER }}/evansh-pipeline:latest
-            ghcr.io/${{ env.IMAGE_OWNER }}/evansh-pipeline:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # ── BFF (Node/Hono) ────────────────────────────────────────────────
+      # ── BFF (Node/Express) ─────────────────────────────────────────────
       - name: Build & push bff
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:

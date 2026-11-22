@@ -4,7 +4,6 @@ import { databases, DB_ID, COLLECTIONS, ID } from '../../lib/appwrite';
 import { contactLimiter } from '../../middleware/rateLimiter';
 import { config } from '../../config/env';
 import { logger } from '../../lib/logger';
-import { validateWithPipeline } from '../../lib/pipelineValidation';
 import { escapeHtml } from '../../lib/html';
 import { sendEmail } from '../../lib/email';
 
@@ -39,22 +38,6 @@ router.post('/', contactLimiter, async (req: Request, res: Response, next: NextF
     }
 
     const { name, email, phone, subject, message } = parsed.data;
-
-    const pipelineResult = await validateWithPipeline(
-      '/pipeline/validate/contact',
-      { name, email, phone, subject, message },
-      req.requestId
-    );
-    if (!pipelineResult.valid) {
-      res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid form data.',
-          fields: pipelineResult.errors,
-        },
-      });
-      return;
-    }
 
     // Save to Appwrite (server-side — API key used, not client session)
     await databases.createDocument(DB_ID, COLLECTIONS.contactMessages, ID.unique(), {

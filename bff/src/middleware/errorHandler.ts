@@ -36,27 +36,32 @@ export function errorHandler(
   }
 
   // Appwrite SDK errors
-  if (err instanceof AppwriteException || ('type' in err && 'code' in err && typeof (err as any).code === 'number')) {
-    const appwriteErr = err as AppwriteException;
-    logger.warn({ requestId, type: appwriteErr.type, code: appwriteErr.code, message: appwriteErr.message }, 'Appwrite error');
+  const isDuckAppwrite = 'type' in err && 'code' in err && typeof err.code === 'number';
+  if (err instanceof AppwriteException || isDuckAppwrite) {
+    const code = 'code' in err && typeof err.code === 'number' ? err.code : 500;
+    const type = 'type' in err && typeof err.type === 'string' ? err.type : undefined;
+    logger.warn({ requestId, type, code, message: err.message }, 'Appwrite error');
 
-    const status = appwriteErr.code >= 400 && appwriteErr.code < 600 ? appwriteErr.code : 502;
+    const status = code >= 400 && code < 600 ? code : 502;
     res.status(status).json({
       error: {
-        code: appwriteErr.type ? appwriteErr.type.toUpperCase() : 'DATABASE_ERROR',
-        message: appwriteErr.message || 'A database error occurred.',
+        code: type ? type.toUpperCase() : 'DATABASE_ERROR',
+        message: err.message || 'A database error occurred.',
       },
     });
     return;
   }
 
-  // Network / Gateway errors to upstream services (FastAPI Pipeline, Appwrite Cloud, SMTP, Resend)
-  const errCode = (err as any)?.code || (err as any)?.cause?.code;
-  const isNetworkTimeout = err.name === 'AbortError' || errCode === 'ETIMEDOUT' || errCode === 'UND_ERR_CONNECT_TIMEOUT';
-  const isNetworkRefused = errCode === 'ECONNREFUSED' || errCode === 'ENOTFOUND' || errCode === 'EAI_AGAIN';
+  // Network / Gateway errors to upstream services (Appwrite Cloud, SMTP, Resend)
+  const errCode = 'code' in err && typeof err.code === 'string' ? err.code : undefined;
+  const cause = 'cause' in err && typeof err.cause === 'object' && err.cause !== null ? err.cause : undefined;
+  const causeCode = cause && 'code' in cause && typeof cause.code === 'string' ? cause.code : undefined;
+  const resolvedCode = errCode || causeCode;
+  const isNetworkTimeout = err.name === 'AbortError' || resolvedCode === 'ETIMEDOUT' || resolvedCode === 'UND_ERR_CONNECT_TIMEOUT';
+  const isNetworkRefused = resolvedCode === 'ECONNREFUSED' || resolvedCode === 'ENOTFOUND' || resolvedCode === 'EAI_AGAIN';
 
   if (isNetworkTimeout) {
-    logger.warn({ requestId, err: err.message, code: errCode }, 'Upstream service timed out');
+    logger.warn({ requestId, err: err.message, code: resolvedCode }, 'Upstream service timed out');
     res.status(504).json({
       error: {
         code: 'GATEWAY_TIMEOUT',

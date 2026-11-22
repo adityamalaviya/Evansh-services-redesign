@@ -11,11 +11,3 @@ services:
         limits:
           cpus: "1"
           memory: 512M
-
-  pipeline:
-    restart: always
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
