@@ -75,7 +75,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     const userEmail = req.user.email.toLowerCase().trim();
     if (userEmail !== config.admin.email) {
       logger.warn(
-        { requestId: req.requestId, userEmail, adminEmail: config.admin.email },
+        { requestId: req.requestId, userEmail },
         'Non-admin user attempted admin access'
       );
       res.status(403).json({

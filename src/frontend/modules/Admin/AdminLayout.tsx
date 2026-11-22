@@ -16,7 +16,7 @@ import {
   Envelope,
 } from "@phosphor-icons/react";
 import { useAuth } from "@backend/contexts/AuthContext";
-import { isAdmin } from "@backend/guards/adminGuard";
+import { isAdmin as checkAdminGuard } from "@backend/guards/adminGuard";
 import { ConfirmModal } from "@frontend/components";
 
 const navItems = [
@@ -28,26 +28,33 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoggedIn, isLoading, logout } = useAuth();
+  const { user, isLoggedIn, isAdmin, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
+  const hasAdminAccess = isAdmin || checkAdminGuard(false, user?.email);
+
   useEffect(() => {
+    if (pathname === "/admin/login") return;
     if (!isLoading && !isLoggingOut) {
       if (!isLoggedIn) {
         router.push("/admin/login");
         return;
       }
-      if (!isAdmin(user?.email)) {
+      if (!hasAdminAccess) {
         router.push("/admin/login?error=access_denied");
       }
     }
-  }, [isLoading, isLoggedIn, user, router, isLoggingOut]);
+  }, [isLoading, isLoggedIn, hasAdminAccess, router, isLoggingOut, pathname]);
 
-  if (!isLoggingOut && (isLoading || !isLoggedIn || !isAdmin(user?.email))) {
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  if (!isLoggingOut && (isLoading || !isLoggedIn || !hasAdminAccess)) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
